@@ -1,0 +1,15 @@
+[package]
+name = "crypto"
+version = "0.1.0"
+authors = ["fran"]
+edition = "2018"
+
+[dependencies]
+curve25519-dalek = { version = "1", features = ["serde"] }
+
+
+[lib]
+name = "catalyst-ffi"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
