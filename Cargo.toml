@@ -1,0 +1,15 @@
+[package]
+name = "crypto"
+version = "0.1.0"
+authors = ["Fran <fran.sl@atlascity.io> (https://atlascity.io)"]
+edition = "2018"
+
+[dependencies]
+ed25519-dalek = { version = "0.9.1", features = ["serde"] }
+rand="0.6.0"
+
+[lib]
+name = "catalystffi"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
