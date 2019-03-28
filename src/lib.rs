@@ -1,7 +1,7 @@
 /**
 * Copyright (c) 2019 Catalyst Network
 *
-* This file is part of Catalyst.Node <https://github.com/catalyst-network/Catalyst.Node>
+* This file is part of Catalyst.FFI <https://github.com/catalyst-network/catalyst-ffi>
 *
 * Catalyst.Node is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
