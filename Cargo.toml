@@ -5,7 +5,7 @@ authors = ["fran"]
 edition = "2018"
 
 [dependencies]
-curve25519-dalek = { version = "1", features = ["serde"] }
+ed25519-dalek = { version = "0.9.1", features = ["serde"] }
 rand="0.6.0"
 
 [lib]
