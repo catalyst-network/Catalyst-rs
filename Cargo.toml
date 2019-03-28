@@ -6,10 +6,10 @@ edition = "2018"
 
 [dependencies]
 curve25519-dalek = { version = "1", features = ["serde"] }
-
+rand="0.6.0"
 
 [lib]
-name = "catalyst-ffi"
+name = "catalystffi"
 path = "src/lib.rs"
 crate-type = ["cdylib"]
 

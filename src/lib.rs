@@ -1,11 +1,11 @@
 use std::os::raw::c_char;
 use std::ffi::CString;
+use rand::{thread_rng, Rng};
+use std::mem;
 
 extern crate curve25519_dalek;
 use curve25519_dalek::ristretto::CompressedRistretto;
 use curve25519_dalek::scalar::Scalar;
-
-use std::mem::transmute;
 
 #[repr(C)]
 pub struct Buffer {
@@ -30,13 +30,9 @@ pub extern fn free_buf(buf: Buffer) {
 
 
 #[no_mangle]
-pub extern "C" fn ct_sign(key: *const [u8; 32]) -> FFIBytes64 {
-    let mut byte_array = [0u8; 64];
-    thread_rng().fill(&mut byte_array[..]);
-    println!("array occupies {} bytes", mem::size_of_val(&byte_array));
-    FFIBytes64 {
-        bytes: byte_array
-    }
+pub extern "C" fn key_gen(out_key: &mut [u8;32]) {
+    thread_rng().fill(out_key);
+    //println!("array occupies {} bytes", mem::size_of_val(&byte_array));
 }
 
 
