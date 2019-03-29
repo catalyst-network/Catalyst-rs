@@ -23,6 +23,7 @@ use ed25519_dalek::SecretKey;
 use std::slice;
 
 use std::str;
+use std::io::Write;
 
 
 #[no_mangle]
@@ -34,13 +35,15 @@ pub extern "C" fn generate_key(out_key: &mut [u8;32]) {
 
 #[no_mangle]
 pub extern "C" fn std_sign(out_signature: &mut [u8;64], private_key: &[u8;32], message: *const u8, message_length: usize){
-   
+   let mut v: Vec<u8> = Vec::new();
    let message_array = unsafe {
         assert!(!message.is_null());
         slice::from_raw_parts(message, message_length)
     };
-    //let message_string : String = String::from_utf8(message_array.Res);
-   //println!("{}",&message_string);
+    
+    v.write(message_array).expect("Unable to write");
+
+    println!("{:?}", v);
 }
 
 
