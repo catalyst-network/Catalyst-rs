@@ -17,14 +17,13 @@
 * along with Catalyst.Node. If not, see <https://www.gnu.org/licenses/>.
 */
 
-use rand::thread_rng;
+
 extern crate ed25519_dalek;
-use ed25519_dalek::SecretKey;
+extern crate rand;
+
+use ed25519_dalek::*;
+use rand::thread_rng;
 use std::slice;
-
-use std::str;
-use std::io::Write;
-
 
 #[no_mangle]
 pub extern "C" fn generate_key(out_key: &mut [u8;32]) {
@@ -35,15 +34,41 @@ pub extern "C" fn generate_key(out_key: &mut [u8;32]) {
 
 #[no_mangle]
 pub extern "C" fn std_sign(out_signature: &mut [u8;64], private_key: &[u8;32], message: *const u8, message_length: usize){
-   let mut v: Vec<u8> = Vec::new();
    let message_array = unsafe {
         assert!(!message.is_null());
         slice::from_raw_parts(message, message_length)
     };
-    
-    v.write(message_array).expect("Unable to write");
+    let secret_key: SecretKey = SecretKey::from_bytes(private_key).unwrap();
+    let expanded_secret: ExpandedSecretKey = (&secret_key).into();
+    let public_key: PublicKey = (&expanded_secret).into();
+    let keypair: Keypair  = Keypair{ secret: secret_key, public: public_key };
+    let signature: Signature = keypair.sign(message_array);
+    out_signature.copy_from_slice(&signature.to_bytes());
+}
 
-    println!("{:?}", v);
+#[cfg(test)]
+mod tests {
+    use super::*;
+    
+    #[test]
+    fn test_generate_key(){
+        let initial_key: [u8;32] = [0;32];
+        let mut out_key: [u8;32] = Clone::clone(&initial_key);
+        //let mut out_key: [u8;32] = [0;32];
+        generate_key(&mut out_key);
+        assert_ne!(out_key,initial_key, "key bytes should have been changed by generate_key function")
+    }
+
+    #[test]
+    fn test_std_sign_verify(){
+        let initial_sig: [u8;64] = [0;64];
+        let mut out_sig: [u8;64] = Clone::clone(&initial_sig);
+
+        let mut key: [u8;32] = [0;32];
+        generate_key(&mut key);
+        let message = String::from("You are a sacrifice article that I cut up rough now");
+        std_sign(&mut out_sig, &key, message.as_ptr(), message.len());
+    }
 }
 
 
