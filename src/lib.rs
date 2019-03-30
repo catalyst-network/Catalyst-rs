@@ -37,7 +37,7 @@ pub extern "C" fn std_sign(out_signature: &mut [u8;64], private_key: &[u8;32], m
         assert!(!message.is_null());
         slice::from_raw_parts(message, message_length)
     };
-    let secret_key: SecretKey = SecretKey::from_bytes(private_key).expect("should be able to make SecretKey from bytes");
+    let secret_key: SecretKey = SecretKey::from_bytes(private_key).expect("failed to create private key");
     let public_key: PublicKey = (&secret_key).into();
     let keypair: Keypair  = Keypair{ secret: secret_key, public: public_key };
     let signature: Signature = keypair.sign(message_array);
@@ -50,14 +50,14 @@ pub extern "C" fn std_verify(signature: & [u8;64], publickey: &[u8;32], message:
         assert!(!message.is_null());
         slice::from_raw_parts(message, message_length)
     };
-    let public_key: PublicKey = PublicKey::from_bytes(publickey).expect("should be able to make PublicKey from bytes");
-    let signature: Signature = Signature::from_bytes(signature).expect("should be able to make Signature from bytes");
+    let public_key: PublicKey = PublicKey::from_bytes(publickey).expect("failed to create public key");
+    let signature: Signature = Signature::from_bytes(signature).expect("failed to create signature");
     public_key.verify(message_array, &signature).is_ok()
 }
 
 #[no_mangle]
 pub extern "C" fn publickey_from_private(out_publickey: &mut [u8;32],private_key: &[u8;32]){
-    let secret_key: SecretKey = SecretKey::from_bytes(private_key).expect("should be able to make SecretKey from bytes");
+    let secret_key: SecretKey = SecretKey::from_bytes(private_key).expect("failed to create private key");
     let public_key: PublicKey = (&secret_key).into();
     out_publickey.copy_from_slice(&public_key.to_bytes())
 }
@@ -81,7 +81,7 @@ mod tests {
         generate_key(&mut privatekey);
         let mut out_publickey: [u8;32] = [0;32];
         publickey_from_private(&mut out_publickey, &privatekey);
-        let secret_key: SecretKey = SecretKey::from_bytes(&privatekey).expect("should be able to make SecretKey from bytes");
+        let secret_key: SecretKey = SecretKey::from_bytes(&privatekey).expect("failed to create private key");
         let public_key: PublicKey = (&secret_key).into();
         assert_eq!(out_publickey, public_key.to_bytes());
     }
@@ -96,7 +96,7 @@ mod tests {
         let message = String::from("You are a sacrifice article that I cut up rough now");
         std_sign(&mut out_sig, &key, message.as_ptr(), message.len());
 
-        let secret_key: SecretKey = SecretKey::from_bytes(&key).expect("should be able to make SecretKey from bytes");
+        let secret_key: SecretKey = SecretKey::from_bytes(&key).expect("failed to create private key");
         let public_key: PublicKey = (&secret_key).into();
         let is_verified: bool = std_verify(&out_sig, &PublicKey::to_bytes(&public_key),message.as_ptr(), message.len());
         assert!(is_verified);
@@ -112,16 +112,9 @@ mod tests {
 
         std_sign(&mut out_sig, &key, message.as_ptr(), message.len());
 
-        let secret_key: SecretKey = SecretKey::from_bytes(&key).unwrap();
+        let secret_key: SecretKey = SecretKey::from_bytes(&key).expect("failed to create private key");
         let public_key: PublicKey = (&secret_key).into();
         let is_verified: bool = std_verify(&out_sig, &PublicKey::to_bytes(&public_key),message2.as_ptr(), message2.len());
         assert!(!is_verified);
     }
 }
-
-
-
-
-
-
-
