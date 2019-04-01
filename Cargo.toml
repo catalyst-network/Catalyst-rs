@@ -1,5 +1,5 @@
 [package]
-name = "crypto"
+name = "Catalyst.Rust.Cryptography.FFI"
 version = "0.1.0"
 authors = ["Fran <fran.sl@atlascity.io> (https://atlascity.io)"]
 edition = "2018"
