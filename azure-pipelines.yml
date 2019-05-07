@@ -36,19 +36,26 @@ steps:
   - script: cargo test --all --verbose
     displayName: Cargo test
   - task: CopyFiles@2
+    displayName: copy windows runtime
+    condition: eq( variables['Agent.OS'], 'Windows_NT' )
+    inputs:
+      SourceFolder: '$(Build.SourcesDirectory)'
+      TargetFolder: '$(Build.ArtifactStagingDirectory)/runtimes/win-x64/native'
+      Contents: 'target/debug/catalystffi.*'
+  - task: CopyFiles@2
     displayName: copy macos runtime
     condition: eq( variables['Agent.OS'], 'Darwin' )
     inputs:
       SourceFolder: '$(Build.SourcesDirectory)'
       TargetFolder: '$(Build.ArtifactStagingDirectory)/runtimes/osx-x64/native'
-      Contents: 'target/debug/catalystffi.*'
+      Contents: 'target/debug/libcatalystffi.*'
   - task: CopyFiles@2
     displayName: copy linux runtime
     condition: eq( variables['Agent.OS'], 'Linux' )
     inputs:
       SourceFolder: '$(Build.SourcesDirectory)'
       TargetFolder: '$(Build.ArtifactStagingDirectory)/runtimes/linux-x64/native'
-      Contents: 'target/debug/catalystffi.*'
+      Contents: 'target/debug/libcatalystffi.*'
   - task: PublishBuildArtifacts@1
     displayName: Publish Artifacts
     inputs:
