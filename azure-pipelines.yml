@@ -39,9 +39,9 @@ steps:
     inputs:
       SourceFolder: '$(Build.SourcesDirectory)'
       TargetFolder: '$(Build.ArtifactStagingDirectory)'
-      Contents: 'target/$(BuildConfiguration)/?(*.dylib|*.dll)'
+      Contents: '**/**/?(*.dylib|*.dll)'
   - task: PublishBuildArtifacts@1
     displayName: Publish Artifacts 
     inputs:
       PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-      ArtifactName: $(imageName)
+      ArtifactName: $(imageName) 
