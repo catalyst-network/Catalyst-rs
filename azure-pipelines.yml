@@ -39,26 +39,31 @@ steps:
     displayName: copy windows runtime
     condition: eq( variables['Agent.OS'], 'Windows_NT' )
     inputs:
-      SourceFolder: '$(Build.SourcesDirectory)'
+      SourceFolder: '$(Build.SourcesDirectory)/target/debug'
       TargetFolder: '$(Build.ArtifactStagingDirectory)/runtimes/win-x64/native'
-      Contents: 'target/debug/catalystffi.*'
+      Contents: 'catalystffi.*'
   - task: CopyFiles@2
     displayName: copy macos runtime
     condition: eq( variables['Agent.OS'], 'Darwin' )
     inputs:
-      SourceFolder: '$(Build.SourcesDirectory)'
+      SourceFolder: '$(Build.SourcesDirectory)/target/debug'
       TargetFolder: '$(Build.ArtifactStagingDirectory)/runtimes/osx-x64/native'
-      Contents: 'target/debug/libcatalystffi.*'
+      Contents: 'libcatalystffi.*'
   - task: CopyFiles@2
     displayName: copy linux runtime
     condition: eq( variables['Agent.OS'], 'Linux' )
     inputs:
-      SourceFolder: '$(Build.SourcesDirectory)'
+      SourceFolder: '$(Build.SourcesDirectory)/target/debug'
       TargetFolder: '$(Build.ArtifactStagingDirectory)/runtimes/linux-x64/native'
-      Contents: 'target/debug/libcatalystffi.*'
+      Contents: 'libcatalystffi.*'
+  - task: CopyFiles@2
+    displayName: copy Licence and csproj for nuget packaging
+    inputs:
+      SourceFolder: '.'
+      Contents: '*.csproj|LICENSE'
+      TargetFolder: '$(Build.ArtifactStagingDirectory)'
   - task: PublishBuildArtifacts@1
     displayName: Publish Artifacts
     inputs:
       PathtoPublish: '$(Build.ArtifactStagingDirectory)'
       ArtifactName: artifacts
-
