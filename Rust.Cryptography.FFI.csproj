@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+  </PropertyGroup>
+  
+  <PropertyGroup>
+    <TargetFramework>netstandard1.1</TargetFramework>
+    <DisableImplicitFrameworkReferences>true</DisableImplicitFrameworkReferences>
+    <NoBuild>true</NoBuild>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <PackageOutputPath>$(MSBuildProjectDirectory)</PackageOutputPath>
+    <ProjectFileToPack>$(MSBuildProjectFullPath)</ProjectFileToPack>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>Rust.Cryptography.FFI</PackageId>
+    <Authors>AtlasCity.io</Authors>
+    <Description>Internal implementation package not meant for direct consumption. Please do not reference directly.</Description>
+    <Copyright>Copyright © 2019 AtlasCity.io</Copyright>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageLicenseUrl>https://github.com/catalyst-network/Rust.Cryptography.FFI/blob/master/LICENSE</PackageLicenseUrl>
+    <RepositoryUrl>https://github.com/catalyst-network/Rust.Cryptography.FFI</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/catalyst-network/Rust.Cryptography.FFI</PackageProjectUrl>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Version)' == '' ">
+    <VersionPrefix Condition=" '$(VersionPrefix)' == '' ">0.0.1</VersionPrefix>
+    <Version Condition=" '$(VersionSuffix)' != '' ">$(VersionPrefix).$(VersionSuffix)</Version>
+    <Version Condition=" '$(Version)' == '' ">$(VersionPrefix)</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETCore.Platforms" Version="1.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="LICENSE" PackagePath="" />
+    <Content Include="runtimes\**\*.*" PackagePath="runtimes\" />
+  </ItemGroup>
+
+</Project>
