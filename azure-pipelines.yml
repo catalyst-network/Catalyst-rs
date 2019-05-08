@@ -60,7 +60,7 @@ steps:
     displayName: copy Licence and csproj for nuget packaging
     inputs:
       SourceFolder: '.'
-      Contents: '*.csproj|LICENSE'
+      Contents: '?(*.csproj|LICENSE)'
       TargetFolder: '$(Build.ArtifactStagingDirectory)'
   - task: PublishBuildArtifacts@1
     displayName: Publish Artifacts
