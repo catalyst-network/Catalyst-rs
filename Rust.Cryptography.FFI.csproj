@@ -14,7 +14,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <PackageId>Rust.Cryptography.FFI</PackageId>
+    <PackageId>Catalyst.Cryptography.BulletProofs.Natives</PackageId>
     <Authors>AtlasCity.io</Authors>
     <Description>Internal implementation package not meant for direct consumption. Please do not reference directly.</Description>
     <Copyright>Copyright © 2019 AtlasCity.io</Copyright>
