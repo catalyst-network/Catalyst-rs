@@ -1,17 +1,13 @@
-<Project Sdk="Microsoft.NET.Sdk">
-
-  <PropertyGroup>
-    <TargetFramework>netcoreapp2.2</TargetFramework>
-    <IsPackable>true</IsPackable>
-  </PropertyGroup>
+﻿<Project Sdk="Microsoft.NET.Sdk">
   
   <PropertyGroup>
-    <TargetFramework>netstandard1.1</TargetFramework>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <DisableImplicitFrameworkReferences>true</DisableImplicitFrameworkReferences>
     <NoBuild>true</NoBuild>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <PackageOutputPath>$(MSBuildProjectDirectory)</PackageOutputPath>
     <ProjectFileToPack>$(MSBuildProjectFullPath)</ProjectFileToPack>
+    <IsPackable>true</IsPackable>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -32,12 +28,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.NETCore.Platforms" Version="1.0.1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="LICENSE" PackagePath="" />
-    <Content Include="runtimes\**\*.*" PackagePath="runtimes\" />
+    <None Include="LICENSE" PackagePath="" Pack="true" />
+    <None Include="runtimes\**\*.*" PackagePath="runtimes\" Pack="true" />
   </ItemGroup>
 
 </Project>
