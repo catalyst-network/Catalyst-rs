@@ -1,3 +1,4 @@
+#![recursion_limit = "1024"]
 /**
 * Copyright (c) 2019 Catalyst Network
 *
@@ -17,12 +18,52 @@
 * along with Catalyst.Node. If not, see <https://www.gnu.org/licenses/>.
 */
 
+#[macro_use]
+extern crate error_chain;
+
+mod errors {
+    error_chain!{}
+}
+
+use errors::*;
+
 extern crate ed25519_dalek;
 extern crate rand;
 
 use ed25519_dalek::*;
 use rand::thread_rng;
 use std::slice;
+
+// Most functions will return the `Result` type, imported from the
+// `errors` module. It is a typedef of the standard `Result` type
+// for which the error type is always our own `Error`.
+fn run() -> Result<()> {
+    use std::fs::File;
+
+    // This operation will fail
+    File::open("contacts")
+        .chain_err(|| "unable to open contacts file")?;
+
+    Ok(())
+}
+
+pub fn run_error() {
+    if let Err(ref e) = run() {
+        println!("error: {}", e);
+
+        for e in e.iter().skip(1) {
+            println!("caused by: {}", e);
+        }
+
+        // The backtrace is not always generated. Try to run this example
+        // with `RUST_BACKTRACE=1`.
+        if let Some(backtrace) = e.backtrace() {
+            println!("backtrace: {:?}", backtrace);
+        }
+
+        ::std::process::exit(1);
+    }
+}
 
 #[no_mangle]
 pub extern "C" fn generate_key(out_key: &mut [u8;32]) {
@@ -61,6 +102,8 @@ pub extern "C" fn publickey_from_private(out_publickey: &mut [u8;32],private_key
     let public_key: PublicKey = (&secret_key).into();
     out_publickey.copy_from_slice(&public_key.to_bytes())
 }
+
+
 
 #[cfg(test)]
 mod tests {
@@ -117,4 +160,5 @@ mod tests {
         let is_verified: bool = std_verify(&out_sig, &PublicKey::to_bytes(&public_key),message2.as_ptr(), message2.len());
         assert!(!is_verified);
     }
+
 }

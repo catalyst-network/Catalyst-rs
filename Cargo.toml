@@ -11,9 +11,13 @@ rand="0.6.0"
 sha2="0.8"
 hex = "^0.3"
 bincode = "^0.9"
+libc = "^0.2"
+error-chain = "0.12.1"
 
 [lib]
 name = "catalystffi"
 path = "src/lib.rs"
-crate-type = ["cdylib"]
+#crate-type = ["cdylib"]
 
+[[bin]]
+name = "main"
