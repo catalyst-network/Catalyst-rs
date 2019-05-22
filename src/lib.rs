@@ -18,21 +18,32 @@
 * along with Catalyst.Node. If not, see <https://www.gnu.org/licenses/>.
 */
 
-#[macro_use]
-extern crate error_chain;
-
-mod errors {
-    error_chain!{}
-}
-
-use errors::*;
-
 extern crate ed25519_dalek;
 extern crate rand;
+extern crate chrono;
+extern crate cookie;
+#[macro_use]
+extern crate error_chain;
+extern crate fern;
+extern crate libc;
+#[macro_use]
+extern crate log;
+extern crate reqwest;
+
+pub mod errors;
+pub mod utils;
+pub mod ffi;
+mod request;
+mod response;
 
 use ed25519_dalek::*;
 use rand::thread_rng;
 use std::slice;
+
+use reqwest::Client;
+pub use request::Request;
+pub use response::Response;
+use crate::errors::*;
 
 // Most functions will return the `Result` type, imported from the
 // `errors` module. It is a typedef of the standard `Result` type
@@ -45,6 +56,30 @@ fn run() -> Result<()> {
         .chain_err(|| "unable to open contacts file")?;
 
     Ok(())
+}
+
+/// Send a `Request`.
+pub fn send_request(req: &Request) -> Result<Response> {
+    info!("Sending a GET request to {}", req.destination);
+    if log_enabled!(log::Level::Debug) {
+        debug!("Sending request");
+
+        trace!("{:#?}", req);
+    }
+
+    let client = Client::builder()
+        .build()
+        .chain_err(|| "The native TLS backend couldn't be initialized")?;
+
+    client
+        .execute(req.to_reqwest())
+        .chain_err(|| "The request failed")
+        .and_then(|r| Response::from_reqwest(r))
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn run_error_function() {
+    run_error();
 }
 
 pub fn run_error() {
