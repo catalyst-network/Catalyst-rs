@@ -62,15 +62,17 @@ thread_local!{
 }
 
 pub fn update_last_error<E: StdError + 'static>(err: E) {
+    //println!("Got this far!{}", err);
+    
     error!("Setting LAST_ERROR: {}", err);
-
     {
+        //println!("How about here?{}", err);
         // Print a pseudo-backtrace for this error, following back each error's
         // cause until we reach the root error.
-        let mut cause = err.cause();
-        while let Some(parent_err) = cause {
+        let mut source = err.source();
+        while let Some(parent_err) = source {
             warn!("Caused by: {}", parent_err);
-            cause = parent_err.cause();
+            source = parent_err.source();
         }
     }
 

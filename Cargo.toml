@@ -23,5 +23,5 @@ hyper = "0.12.29"
 [lib]
 name = "catalystffi"
 path = "src/lib.rs"
-#crate-type = ["cdylib"]
+crate-type = ["cdylib"]
 

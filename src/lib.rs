@@ -39,11 +39,14 @@ mod response;
 use ed25519_dalek::*;
 use rand::thread_rng;
 use std::slice;
+use std::ptr;
 
 use reqwest::Client;
 pub use request::Request;
+use reqwest::{Method, Url};
 pub use response::Response;
 use crate::errors::*;
+use crate::ffi::*;
 
 // Most functions will return the `Result` type, imported from the
 // `errors` module. It is a typedef of the standard `Result` type
@@ -79,9 +82,16 @@ pub fn send_request(req: &Request) -> Result<Response> {
 
 #[no_mangle]
 pub unsafe extern "C" fn run_error_function() {
-    run_error();
-}
+    let res = match outer_error(){
+        Err(e) => {update_last_error(e)}
+        Ok(()) => {println!("all okay!")}
+    };
 
+}
+pub fn outer_error() -> Result<()>{
+    run().chain_err(|| "adding some more text")?;
+    Ok(())
+}
 pub fn run_error() {
     if let Err(ref e) = run() {
         println!("error: {}", e);
@@ -99,6 +109,13 @@ pub fn run_error() {
         ::std::process::exit(1);
     }
 }
+
+/*pub fn run_other_error() -> Result<()>{
+    let u = "xc".parse::<u32>()?;
+    Ok(())
+    
+}*/
+
 
 #[no_mangle]
 pub extern "C" fn generate_key(out_key: &mut [u8;32]) {
@@ -195,5 +212,6 @@ mod tests {
         let is_verified: bool = std_verify(&out_sig, &PublicKey::to_bytes(&public_key),message2.as_ptr(), message2.len());
         assert!(!is_verified);
     }
+
 
 }
