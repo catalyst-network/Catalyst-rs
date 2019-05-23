@@ -4,64 +4,15 @@
 use std::ffi::CStr;
 use std::ptr;
 use std::slice;
-use std::error::Error as StdError;
 use libc::{c_char, c_int};
-use reqwest::{Url, Method};
 use std::cell::RefCell;
 
-
-use crate::request::*;
-
-
-/// Construct a new `Request` which will target the provided URL and fill out 
-/// all other fields with their defaults.
-/// 
-/// # Note
-/// 
-/// If the string passed in isn't a valid URL this will return a null pointer.
-/// 
-/// # Safety
-/// 
-/// Make sure you destroy the request with [`request_destroy()`] once you are
-/// done with it.
-/// 
-/// [`request_destroy()`]: fn.request_destroy.html
-#[no_mangle]
-pub unsafe extern "C" fn request_create(url: *const c_char) -> *mut Request {
-    if url.is_null() {
-        return ptr::null_mut();
-    }
-
-    let raw = CStr::from_ptr(url);
-
-    let url_as_str = match raw.to_str() {
-        Ok(s) => s,
-        Err(_) => return ptr::null_mut(),
-    };
-
-    let parsed_url = match Url::parse(url_as_str) {
-        Ok(u) => u,
-        Err(_) => return ptr::null_mut(),
-    };
-
-    let req = Request::new(parsed_url, Method::GET);
-    println!("Request created in Rust: {}", url_as_str);
-    Box::into_raw(Box::new(req))
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn request_destroy(req: *mut Request) {
-    if !req.is_null() {
-        println!("Request was destroyed");
-        drop(Box::from_raw(req));
-    }
-}
 
 thread_local!{
     static LAST_ERROR: RefCell<Option<Box<StdError>>> = RefCell::new(None);
 }
 
-pub fn update_last_error<E: StdError + 'static>(err: E) {
+pub fn update_last_error(err: &failure::Error) {
     //println!("Got this far!{}", err);
     
     error!("Setting LAST_ERROR: {}", err);
@@ -69,10 +20,10 @@ pub fn update_last_error<E: StdError + 'static>(err: E) {
         //println!("How about here?{}", err);
         // Print a pseudo-backtrace for this error, following back each error's
         // cause until we reach the root error.
-        let mut source = err.source();
-        while let Some(parent_err) = source {
+        let mut cause = err.cause();
+        while let Some(parent_err) = cause {
             warn!("Caused by: {}", parent_err);
-            source = parent_err.source();
+            cause = parent_err.cause();
         }
     }
 
@@ -82,7 +33,7 @@ pub fn update_last_error<E: StdError + 'static>(err: E) {
 }
 
 /// Retrieve the most recent error, clearing it in the process.
-pub fn take_last_error() -> Option<Box<StdError>> {
+pub fn take_last_error() -> Option<Box<failure::Error>> {
     LAST_ERROR.with(|prev| prev.borrow_mut().take())
 }
 

@@ -19,6 +19,7 @@ log = "0.4"
 fern = "0.5"
 reqwest = "0.9.17"
 hyper = "0.12.29"
+failure = "0.1.5"
 
 [lib]
 name = "catalystffi"

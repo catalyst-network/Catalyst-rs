@@ -2,8 +2,6 @@ use std::sync::{Once, ONCE_INIT};
 use fern;
 use chrono::Local;
 
-use crate::errors::*;
-
 /// Initialize the global logger and log to `rest_client.log`.
 ///
 /// Note that this is an idempotent function, so you can call it as many

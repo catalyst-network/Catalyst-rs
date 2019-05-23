@@ -20,76 +20,72 @@
 
 extern crate ed25519_dalek;
 extern crate rand;
-extern crate chrono;
-extern crate cookie;
-#[macro_use]
-extern crate error_chain;
-extern crate fern;
 extern crate libc;
-#[macro_use]
-extern crate log;
-extern crate reqwest;
+#[macro_use] extern crate log;
+#[macro_use] extern crate failure;
 
-pub mod errors;
+//pub mod errors;
 pub mod utils;
 pub mod ffi;
-mod request;
-mod response;
 
 use ed25519_dalek::*;
 use rand::thread_rng;
 use std::slice;
 use std::ptr;
+use std::result;
 
-use reqwest::Client;
-pub use request::Request;
-use reqwest::{Method, Url};
-pub use response::Response;
-use crate::errors::*;
+use failure::Error;
 use crate::ffi::*;
+use libc::{c_char, c_int};
 
-// Most functions will return the `Result` type, imported from the
-// `errors` module. It is a typedef of the standard `Result` type
-// for which the error type is always our own `Error`.
+
+type Result<T> = result::Result<T, failure::Error>;
+
 fn run() -> Result<()> {
     use std::fs::File;
 
     // This operation will fail
-    File::open("contacts")
-        .chain_err(|| "unable to open contacts file")?;
+    File::open("contacts")?;
 
     Ok(())
 }
 
-/// Send a `Request`.
-pub fn send_request(req: &Request) -> Result<Response> {
-    info!("Sending a GET request to {}", req.destination);
-    if log_enabled!(log::Level::Debug) {
-        debug!("Sending request");
-
-        trace!("{:#?}", req);
-    }
-
-    let client = Client::builder()
-        .build()
-        .chain_err(|| "The native TLS backend couldn't be initialized")?;
-
-    client
-        .execute(req.to_reqwest())
-        .chain_err(|| "The request failed")
-        .and_then(|r| Response::from_reqwest(r))
-}
 
 #[no_mangle]
-pub unsafe extern "C" fn run_error_function() {
+pub unsafe extern "C" fn run_error_function() -> c_int {
     let res = match outer_error(){
-        Err(e) => {update_last_error(e)}
-        Ok(()) => {println!("all okay!")}
+        Err(e) => {
+            update_last_error(&e);
+            return last_error_length();
+                    }
+        Ok(()) => {return 0;}
     };
 
 }
+
+#[no_mangle]
+pub unsafe extern "C" fn verify_with_errors(out_is_verified: &c_int, signature: & [u8;64], publickey: &[u8;32], message: *const u8, message_length: usize) -> c_int {
+   let res = match std_verify(out_is_verified: &c_int, signature: & [u8;64], publickey: &[u8;32], message: *const u8, message_length: usize){
+        Err(e) => {
+            update_last_error(e);
+            return last_error_length();
+                    }
+        Ok(()) => {return 0;}
+    };
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn sign_with_errors(out_signature: &mut [u8;64], private_key: &[u8;32], message: *const u8, message_length: usize) -> c_int {
+   let res = match std_sign(out_signature, private_key, message, message_length){
+        Err(e) => {
+            update_last_error(&e);
+            return last_error_length();
+                    }
+        Ok(()) => {return 0;}
+    };
+}
 pub fn outer_error() -> Result<()>{
-    run().chain_err(|| "adding some more text")?;
+    run()?;
     Ok(())
 }
 pub fn run_error() {
@@ -125,7 +121,7 @@ pub extern "C" fn generate_key(out_key: &mut [u8;32]) {
 }
 
 #[no_mangle]
-pub extern "C" fn std_sign(out_signature: &mut [u8;64], private_key: &[u8;32], message: *const u8, message_length: usize){
+pub extern "C" fn std_sign(out_signature: &mut [u8;64], private_key: &[u8;32], message: *const u8, message_length: usize) -> Result<()>{
    let message_array = unsafe {
         assert!(!message.is_null());
         slice::from_raw_parts(message, message_length)
@@ -135,17 +131,19 @@ pub extern "C" fn std_sign(out_signature: &mut [u8;64], private_key: &[u8;32], m
     let keypair: Keypair  = Keypair{ secret: secret_key, public: public_key };
     let signature: Signature = keypair.sign(message_array);
     out_signature.copy_from_slice(&signature.to_bytes());
+    Ok(())
 }
 
 #[no_mangle]
-pub extern "C" fn std_verify(signature: & [u8;64], publickey: &[u8;32], message: *const u8, message_length: usize) -> bool{
+pub extern "C" fn std_verify(out_is_verified: &c_int, signature: & [u8;64], publickey: &[u8;32], message: *const u8, message_length: usize) -> Result<()>{
    let message_array = unsafe {
         assert!(!message.is_null());
         slice::from_raw_parts(message, message_length)
     };
-    let public_key: PublicKey = PublicKey::from_bytes(publickey).expect("failed to create public key");
+    let mut public_key: PublicKey = PublicKey::from_bytes(publickey).expect("failed to create public key");
     let signature: Signature = Signature::from_bytes(signature).expect("failed to create signature");
-    public_key.verify(message_array, &signature).is_ok()
+    public_key.verify(message_array, &signature)
+    
 }
 
 #[no_mangle]
