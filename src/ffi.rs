@@ -1,12 +1,10 @@
 //! The foreign function interface which exposes this library to non-Rust 
 //! languages.
 
-use std::ffi::CStr;
 use std::ptr;
 use std::slice;
 use libc::{c_char, c_int};
 use std::cell::RefCell;
-
 
 thread_local!{
     static LAST_ERROR: RefCell<Option<Box<failure::Error>>> = RefCell::new(None);
@@ -92,7 +90,7 @@ pub unsafe extern "C" fn last_error_message(buffer: *mut c_char, length: c_int) 
 
     // Add a trailing null so people using the string as a `char *` don't
     // accidentally read into garbage.
-    buffer[error_message.len()] = 0;
+    //buffer[error_message.len()] = 0;
 
     error_message.len() as c_int
 }

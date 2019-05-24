@@ -21,62 +21,25 @@
 extern crate ed25519_dalek;
 extern crate rand;
 extern crate libc;
+extern crate failure;
 #[macro_use] extern crate log;
-#[macro_use] extern crate failure;
 
-//pub mod errors;
-pub mod utils;
+
 pub mod ffi;
 
 use ed25519_dalek::*;
 use rand::thread_rng;
 use std::slice;
-use std::ptr;
 use std::result;
+use libc::{c_int};
 
-use failure::{Backtrace, Fail, Error, ResultExt};
 use crate::ffi::*;
-use libc::{c_char, c_int};
-
 
 type Result<T> = result::Result<T, failure::Error>;
 
-fn run() -> Result<()> {
-    use std::fs::File;
-
-    // This operation will fail
-    File::open("contacts")?;
-
-    Ok(())
-}
-
-
 #[no_mangle]
-pub unsafe extern "C" fn run_error_function() -> c_int {
-    let res = match outer_error(){
-        Err(e) => {
-            update_last_error(e);
-            return last_error_length();
-                    }
-        Ok(()) => {return 0;}
-    };
-
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn verify_with_errors(signature: & [u8;64], publickey: &[u8;32], message: *const u8, message_length: usize) -> c_int {
-   let res = match std_verify(signature, publickey, message, message_length){
-        Err(e) => {
-            update_last_error(e);
-            return last_error_length();
-                    }
-        Ok(b) => {return 0;}
-    };
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn sign_with_errors(out_signature: &mut [u8;64], private_key: &[u8;32], message: *const u8, message_length: usize) -> c_int {
-   let res = match std_sign(out_signature, private_key, message, message_length){
+pub extern "C" fn verify_with_errors(signature: & [u8;64], publickey: &[u8;32], message: *const u8, message_length: usize) -> c_int {
+   let _res = match std_verify(signature, publickey, message, message_length){
         Err(e) => {
             update_last_error(e);
             return last_error_length();
@@ -84,17 +47,17 @@ pub unsafe extern "C" fn sign_with_errors(out_signature: &mut [u8;64], private_k
         Ok(()) => {return 0;}
     };
 }
-pub fn outer_error() -> Result<()>{
-    run()?;
-    Ok(())
+
+#[no_mangle]
+pub extern "C" fn sign_with_errors(out_signature: &mut [u8;64], private_key: &[u8;32], message: *const u8, message_length: usize) -> c_int {
+   let _res = match std_sign(out_signature, private_key, message, message_length){
+        Err(e) => {
+            update_last_error(e);
+            return last_error_length();
+                    }
+        Ok(()) => {return 0;}
+    };
 }
-
-/*pub fn run_other_error() -> Result<()>{
-    let u = "xc".parse::<u32>()?;
-    Ok(())
-    
-}*/
-
 
 #[no_mangle]
 pub extern "C" fn generate_key(out_key: &mut [u8;32]) {
@@ -117,18 +80,15 @@ pub extern "C" fn std_sign(out_signature: &mut [u8;64], private_key: &[u8;32], m
     Ok(())
 }
 
-#[no_mangle]
-pub extern "C" fn std_verify(signature: & [u8;64], publickey: &[u8;32], message: *const u8, message_length: usize) -> Result<bool>{
-   println!("finction start");
+fn std_verify(signature: & [u8;64], publickey: &[u8;32], message: *const u8, message_length: usize) -> Result<()>{
    let message_array = unsafe {
         assert!(!message.is_null());
         slice::from_raw_parts(message, message_length)
     };
-    let mut public_key: PublicKey = PublicKey::from_bytes(publickey)?;
+    let public_key: PublicKey = PublicKey::from_bytes(publickey)?;
     let signature: Signature = Signature::from_bytes(signature)?;
-    println!("before return");
-    Ok(public_key.verify(message_array, &signature).is_ok());
-    
+    public_key.verify(message_array, &signature)?;
+    Ok(())
 }
 
 #[no_mangle]
@@ -137,8 +97,6 @@ pub extern "C" fn publickey_from_private(out_publickey: &mut [u8;32],private_key
     let public_key: PublicKey = (&secret_key).into();
     out_publickey.copy_from_slice(&public_key.to_bytes())
 }
-
-
 
 #[cfg(test)]
 mod tests {
@@ -163,7 +121,7 @@ mod tests {
         let public_key: PublicKey = (&secret_key).into();
         assert_eq!(out_publickey, public_key.to_bytes());
     }
-
+/*
     #[test]
     fn test_std_sign_verify(){
         let initial_sig: [u8;64] = [0;64];
@@ -179,7 +137,8 @@ mod tests {
         let is_verified: bool = std_verify(&out_sig, &PublicKey::to_bytes(&public_key),message.as_ptr(), message.len());
         assert!(is_verified);
     }
-
+    */
+/*
     #[test]
     fn test_std_sign_verify_fails(){
         let mut out_sig: [u8;64] = [0;64];
@@ -195,6 +154,26 @@ mod tests {
         let is_verified: bool = std_verify(&out_sig, &PublicKey::to_bytes(&public_key),message2.as_ptr(), message2.len());
         assert!(!is_verified);
     }
+    */
+
+    #[test]
+    fn test_std_sign_verify_errors_fails(){
+        let mut out_sig: [u8;64] = [0;64];
+        let message = String::from("You are a sacrifice article that I cut up rough now");
+        let message2 = String::from("Mr. speaker, we are for the big");
+        let mut key: [u8;32] = [0;32];
+        generate_key(&mut key);
+
+        sign_with_errors(&mut out_sig, &key, message.as_ptr(), message.len());
+
+        let secret_key: SecretKey = SecretKey::from_bytes(&key).expect("failed to create private key");
+        let public_key: PublicKey = (&secret_key).into();
+        let x: c_int = verify_with_errors(&out_sig, &PublicKey::to_bytes(&public_key),message2.as_ptr(), message2.len());
+        println!("{}",x);
+        
+        assert!(x!=0);
+    }
+
 
 
 }
