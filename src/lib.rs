@@ -34,7 +34,7 @@ use std::slice;
 use std::ptr;
 use std::result;
 
-use failure::Error;
+use failure::{Backtrace, Fail, Error, ResultExt};
 use crate::ffi::*;
 use libc::{c_char, c_int};
 
@@ -55,7 +55,7 @@ fn run() -> Result<()> {
 pub unsafe extern "C" fn run_error_function() -> c_int {
     let res = match outer_error(){
         Err(e) => {
-            update_last_error(&e);
+            update_last_error(e);
             return last_error_length();
                     }
         Ok(()) => {return 0;}
@@ -64,13 +64,13 @@ pub unsafe extern "C" fn run_error_function() -> c_int {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn verify_with_errors(out_is_verified: &c_int, signature: & [u8;64], publickey: &[u8;32], message: *const u8, message_length: usize) -> c_int {
-   let res = match std_verify(out_is_verified: &c_int, signature: & [u8;64], publickey: &[u8;32], message: *const u8, message_length: usize){
+pub unsafe extern "C" fn verify_with_errors(signature: & [u8;64], publickey: &[u8;32], message: *const u8, message_length: usize) -> c_int {
+   let res = match std_verify(signature, publickey, message, message_length){
         Err(e) => {
             update_last_error(e);
             return last_error_length();
                     }
-        Ok(()) => {return 0;}
+        Ok(b) => {return 0;}
     };
 }
 
@@ -78,7 +78,7 @@ pub unsafe extern "C" fn verify_with_errors(out_is_verified: &c_int, signature: 
 pub unsafe extern "C" fn sign_with_errors(out_signature: &mut [u8;64], private_key: &[u8;32], message: *const u8, message_length: usize) -> c_int {
    let res = match std_sign(out_signature, private_key, message, message_length){
         Err(e) => {
-            update_last_error(&e);
+            update_last_error(e);
             return last_error_length();
                     }
         Ok(()) => {return 0;}
@@ -87,23 +87,6 @@ pub unsafe extern "C" fn sign_with_errors(out_signature: &mut [u8;64], private_k
 pub fn outer_error() -> Result<()>{
     run()?;
     Ok(())
-}
-pub fn run_error() {
-    if let Err(ref e) = run() {
-        println!("error: {}", e);
-
-        for e in e.iter().skip(1) {
-            println!("caused by: {}", e);
-        }
-
-        // The backtrace is not always generated. Try to run this example
-        // with `RUST_BACKTRACE=1`.
-        if let Some(backtrace) = e.backtrace() {
-            println!("backtrace: {:?}", backtrace);
-        }
-
-        ::std::process::exit(1);
-    }
 }
 
 /*pub fn run_other_error() -> Result<()>{
@@ -126,7 +109,7 @@ pub extern "C" fn std_sign(out_signature: &mut [u8;64], private_key: &[u8;32], m
         assert!(!message.is_null());
         slice::from_raw_parts(message, message_length)
     };
-    let secret_key: SecretKey = SecretKey::from_bytes(private_key).expect("failed to create private key");
+    let secret_key: SecretKey = SecretKey::from_bytes(private_key)?;
     let public_key: PublicKey = (&secret_key).into();
     let keypair: Keypair  = Keypair{ secret: secret_key, public: public_key };
     let signature: Signature = keypair.sign(message_array);
@@ -135,14 +118,16 @@ pub extern "C" fn std_sign(out_signature: &mut [u8;64], private_key: &[u8;32], m
 }
 
 #[no_mangle]
-pub extern "C" fn std_verify(out_is_verified: &c_int, signature: & [u8;64], publickey: &[u8;32], message: *const u8, message_length: usize) -> Result<()>{
+pub extern "C" fn std_verify(signature: & [u8;64], publickey: &[u8;32], message: *const u8, message_length: usize) -> Result<bool>{
+   println!("finction start");
    let message_array = unsafe {
         assert!(!message.is_null());
         slice::from_raw_parts(message, message_length)
     };
-    let mut public_key: PublicKey = PublicKey::from_bytes(publickey).expect("failed to create public key");
-    let signature: Signature = Signature::from_bytes(signature).expect("failed to create signature");
-    public_key.verify(message_array, &signature)
+    let mut public_key: PublicKey = PublicKey::from_bytes(publickey)?;
+    let signature: Signature = Signature::from_bytes(signature)?;
+    println!("before return");
+    Ok(public_key.verify(message_array, &signature).is_ok());
     
 }
 

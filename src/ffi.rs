@@ -9,10 +9,10 @@ use std::cell::RefCell;
 
 
 thread_local!{
-    static LAST_ERROR: RefCell<Option<Box<StdError>>> = RefCell::new(None);
+    static LAST_ERROR: RefCell<Option<Box<failure::Error>>> = RefCell::new(None);
 }
 
-pub fn update_last_error(err: &failure::Error) {
+pub fn update_last_error(err: failure::Error) {
     //println!("Got this far!{}", err);
     
     error!("Setting LAST_ERROR: {}", err);
@@ -20,10 +20,10 @@ pub fn update_last_error(err: &failure::Error) {
         //println!("How about here?{}", err);
         // Print a pseudo-backtrace for this error, following back each error's
         // cause until we reach the root error.
-        let mut cause = err.cause();
-        while let Some(parent_err) = cause {
-            warn!("Caused by: {}", parent_err);
-            cause = parent_err.cause();
+        let mut prev = err.as_fail();
+        while let Some(next) = prev.cause() {
+            warn!("Caused by: {}", &next.to_string());
+            prev = next;
         }
     }
 

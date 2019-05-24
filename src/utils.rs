@@ -28,10 +28,10 @@ pub extern "C" fn initialize_logging() {
 }
 
 /// Log an error and each successive thing which caused it.
-pub fn backtrace(e: &Error) {
-    error!("Error: {}", e);
+pub fn backtrace(err: &failure::Error) {
+    error!("Error: {}", err);
 
-    for cause in e.iter().skip(1) {
-        warn!("\tCaused By: {}", cause);
-    }
+    /*for source in err.iter().skip(1) {
+        warn!("\tCaused By: {}", source);
+    }*/
 }
