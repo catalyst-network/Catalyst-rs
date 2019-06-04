@@ -98,6 +98,40 @@ pub extern "C" fn publickey_from_private(out_publickey: &mut [u8;32],private_key
     out_publickey.copy_from_slice(&public_key.to_bytes())
 }
 
+#[no_mangle]
+pub extern "C" fn validate_public_key(public_key: &[u8;32]) -> c_int{
+    match validate_public(&public_key){
+        Err(e) => {
+            //match expected errors and return error code
+            update_last_error(e);
+            return -1;
+            }
+        Ok(()) => {return 0;}
+    };
+}
+
+fn validate_public(public_key: &[u8;32]) -> Result<()>{
+    PublicKey::from_bytes(public_key)?;
+    Ok(())
+}
+
+#[no_mangle]
+pub extern "C" fn validate_private_key(private_key: &[u8;32]) -> c_int{
+    match validate_private(&private_key){
+        Err(e) => {
+            //match expected errors and return error code
+            update_last_error(e);
+            return -1;
+            }
+        Ok(()) => {return 0;}
+    };
+}
+
+fn validate_private(private_key: &[u8;32]) -> Result<()>{
+    SecretKey::from_bytes(private_key)?;
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
