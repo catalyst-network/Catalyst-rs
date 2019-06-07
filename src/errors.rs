@@ -15,12 +15,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Rust.Cryptography.FFI. If not, see <https://www.gnu.org/licenses/>.
 
-//! ???
+//! functionality for querying the most recent error and retrieving error codes based on an error type.
 
-
-use std::ptr;
-use std::slice;
-use libc::{c_char, c_int};
 use std::cell::RefCell;
 use crate::constants;
 
@@ -53,9 +49,8 @@ pub fn take_last_error() -> Option<Box<failure::Error>> {
 /// Retrieve error code corresponding to error type.
 pub fn get_error_code(err : &failure::Error ) -> i32 {
     if let Some(_) = err.downcast_ref::<ed25519_dalek::SignatureError>() {
-                return constants::SIGNATURE_ERROR;
-                
-            }
-            else {return -1;}
+        return constants::SIGNATURE_ERROR;
+    }
+    else {return -1;}
 }
 

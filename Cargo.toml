@@ -26,3 +26,5 @@ name = "catalystffi"
 path = "src/lib.rs"
 crate-type = ["cdylib"]
 
+[profile.dev]
+opt-level = 3 

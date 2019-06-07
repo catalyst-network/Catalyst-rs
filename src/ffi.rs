@@ -22,9 +22,9 @@ use std::ptr;
 use std::slice;
 use libc::{c_char, c_int};
 use crate::errors;
+use crate::keys;
 use crate::std_signature;
 use crate::constants;
-
 
 /// Calculate the number of bytes in the last error's error message **not**
 /// including any trailing `null` characters.
@@ -83,6 +83,7 @@ pub unsafe extern "C" fn last_error_message(buffer: *mut c_char, length: c_int) 
     error_message.len() as c_int
 }
 
+/// Verifies that an ed25519 signature corresponds to the provided public key and message. Returns 0 if sucessful, otherwise returns an error code.
 #[no_mangle]
 pub extern "C" fn std_verify(signature: & [u8;constants::SIGNATURE_LENGTH], publickey: &[u8;constants::PUBLIC_KEY_LENGTH], message: *const u8, message_length: usize) -> c_int {
    let _res = match std_signature::verify(signature, publickey, message, message_length){
@@ -95,9 +96,36 @@ pub extern "C" fn std_verify(signature: & [u8;constants::SIGNATURE_LENGTH], publ
     };
 }
 
+/// Creates a signature from private key and message. Returns 0 if sucessful, otherwise returns an error code.
 #[no_mangle]
 pub extern "C" fn std_sign(out_signature: &mut [u8;constants::SIGNATURE_LENGTH], private_key: &[u8;constants::PRIVATE_KEY_LENGTH], message: *const u8, message_length: usize) -> c_int {
    let _res = match std_signature::sign(out_signature, private_key, message, message_length){
+        Err(err) => {
+            let error_code = errors::get_error_code(&err);
+            errors::update_last_error(err);
+            return error_code;
+        }
+        Ok(()) => {return 0;}
+    };
+}
+
+/// Returns correponding public key, given a private key. Returns 0 if sucessful, otherwise returns an error code.
+#[no_mangle]
+pub extern "C" fn publickey_from_private(out_publickey: &mut [u8;constants::PUBLIC_KEY_LENGTH],private_key: &[u8;constants::PRIVATE_KEY_LENGTH]) -> c_int {
+    let _res = match keys::publickey_from_private(out_publickey, private_key){
+        Err(err) => {
+            let error_code = errors::get_error_code(&err);
+            errors::update_last_error(err);
+            return error_code;
+        }
+        Ok(()) => {return 0;}
+    };
+}
+
+/// Randomly generated private key. Returns 0 if sucessful, otherwise returns an error code.
+#[no_mangle]
+pub extern "C" fn generate_key(out_key: &mut [u8;constants::PRIVATE_KEY_LENGTH]) -> c_int {
+    let _res = match keys::generate_key(out_key){
         Err(err) => {
             let error_code = errors::get_error_code(&err);
             errors::update_last_error(err);
