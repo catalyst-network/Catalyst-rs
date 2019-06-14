@@ -51,6 +51,6 @@ pub fn get_error_code(err : &failure::Error ) -> i32 {
     if let Some(_) = err.downcast_ref::<ed25519_dalek::SignatureError>() {
         return constants::SIGNATURE_ERROR;
     }
-    else {return -1;}
+    else {return constants::UNKNOWN_ERROR;}
 }
 

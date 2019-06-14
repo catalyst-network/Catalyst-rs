@@ -27,3 +27,5 @@ pub const PRIVATE_KEY_LENGTH: usize = 32;
 pub const PUBLIC_KEY_LENGTH: usize = 32;
 
 pub const SIGNATURE_ERROR : i32 = 101;
+
+pub const UNKNOWN_ERROR : i32 = -1;

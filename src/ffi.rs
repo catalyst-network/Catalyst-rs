@@ -83,20 +83,38 @@ pub unsafe extern "C" fn last_error_message(buffer: *mut c_char, length: c_int) 
     error_message.len() as c_int
 }
 
-/// Verifies that an ed25519 signature corresponds to the provided public key and message. Returns 0 if sucessful, otherwise returns an error code.
+#[repr(C)]
+pub struct Bbool {    
+    pub success: bool,
+}
+
+impl Bbool {
+    fn set(&mut self, b: &bool) {
+        // ^^^ Here
+        self.success = *b;
+    }
+}
+
+/// Verifies that an ed25519 signature corresponds to the provided public key and message. Returns 0 if no error encountered, otherwise returns an error code.
 #[no_mangle]
-pub extern "C" fn std_verify(signature: & [u8;constants::SIGNATURE_LENGTH], publickey: &[u8;constants::PUBLIC_KEY_LENGTH], message: *const u8, message_length: usize) -> c_int {
-   let _res = match std_signature::verify(signature, publickey, message, message_length){
+pub extern "C" fn std_verify(signature: & [u8;constants::SIGNATURE_LENGTH], publickey: &[u8;constants::PUBLIC_KEY_LENGTH], message: *const u8, message_length: usize , bb: &mut [u8;1]) -> c_int {
+    match std_signature::verify(signature, publickey, message, message_length){
         Err(err) => {
             let error_code = errors::get_error_code(&err);
             errors::update_last_error(err);
             return error_code;
         }
-        Ok(()) => {return 0;}
+        Ok(b) => {
+            bb[0] = b as u8;
+            return 0;
+            //return errorcode_with_bool{error_code : 0, success : b}
+            }
     };
 }
 
-/// Creates a signature from private key and message. Returns 0 if sucessful, otherwise returns an error code.
+
+
+/// Creates a signature from private key and message. Returns 0 if no error encountered, otherwise returns an error code.
 #[no_mangle]
 pub extern "C" fn std_sign(out_signature: &mut [u8;constants::SIGNATURE_LENGTH], private_key: &[u8;constants::PRIVATE_KEY_LENGTH], message: *const u8, message_length: usize) -> c_int {
    let _res = match std_signature::sign(out_signature, private_key, message, message_length){

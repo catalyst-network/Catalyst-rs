@@ -25,15 +25,14 @@ use crate::keys;
 
 type Result<T> = result::Result<T, failure::Error>;
 
-pub fn verify(signature: & [u8;constants::SIGNATURE_LENGTH], publickey: &[u8;constants::PUBLIC_KEY_LENGTH], message: *const u8, message_length: usize) -> Result<()>{
+pub fn verify(signature: & [u8;constants::SIGNATURE_LENGTH], publickey: &[u8;constants::PUBLIC_KEY_LENGTH], message: *const u8, message_length: usize) -> Result<bool>{
    let message_array = unsafe {
         assert!(!message.is_null());
         slice::from_raw_parts(message, message_length)
     };
     let public_key: PublicKey = PublicKey::from_bytes(publickey)?;
     let signature: Signature = Signature::from_bytes(signature)?;
-    public_key.verify(message_array, &signature)?;
-    Ok(())
+    Ok(public_key.verify(message_array, &signature).is_ok())
 }
 
 pub fn sign(out_signature: &mut [u8;constants::SIGNATURE_LENGTH], private_key: &[u8;constants::PRIVATE_KEY_LENGTH], message: *const u8, message_length: usize) -> Result<()>{
@@ -66,6 +65,7 @@ mod tests {
         let secret_key: SecretKey = SecretKey::from_bytes(&key).expect("failed to create private key");
         let public_key: PublicKey = (&secret_key).into();
         assert!(verify(&out_sig, &PublicKey::to_bytes(&public_key),message.as_ptr(), message.len()).is_ok());
+        assert_eq!(verify(&out_sig, &PublicKey::to_bytes(&public_key),message.as_ptr(), message.len()).unwrap(),true);
     }
 
     #[test]
@@ -80,7 +80,8 @@ mod tests {
 
         let secret_key: SecretKey = SecretKey::from_bytes(&key).expect("failed to create private key");
         let public_key: PublicKey = (&secret_key).into();
-        assert!(verify(&out_sig, &PublicKey::to_bytes(&public_key),message2.as_ptr(), message2.len()).is_err());
+        assert!(verify(&out_sig, &PublicKey::to_bytes(&public_key),message.as_ptr(), message.len()).is_ok());
+        assert_eq!(verify(&out_sig, &PublicKey::to_bytes(&public_key),message2.as_ptr(), message2.len()).unwrap(),false);
     }
 
 
