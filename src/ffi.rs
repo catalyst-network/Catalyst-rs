@@ -30,10 +30,7 @@ use crate::constants;
 /// including any trailing `null` characters.
 #[no_mangle]
 pub extern "C" fn last_error_length() -> c_int {
-    errors::LAST_ERROR.with(|prev| match *prev.borrow() {
-        Some(ref err) => err.to_string().len() as c_int + 1,
-        None => 0,
-    })
+    errors::last_error_length()
 }
 
 /// Write the most recent error message into a caller-provided buffer as a UTF-8
@@ -53,7 +50,6 @@ pub unsafe extern "C" fn last_error_message(buffer: *mut c_char, length: c_int) 
         warn!("Null pointer passed into last_error_message() as the buffer");
         return -1;
     }
-
     let last_error = match errors::take_last_error() {
         Some(err) => err,
         None => return 0,
@@ -83,21 +79,9 @@ pub unsafe extern "C" fn last_error_message(buffer: *mut c_char, length: c_int) 
     error_message.len() as c_int
 }
 
-#[repr(C)]
-pub struct Bbool {    
-    pub success: bool,
-}
-
-impl Bbool {
-    fn set(&mut self, b: &bool) {
-        // ^^^ Here
-        self.success = *b;
-    }
-}
-
-/// Verifies that an ed25519 signature corresponds to the provided public key and message. Returns 0 if no error encountered, otherwise returns an error code.
+/// Verifies that an ed25519 signature corresponds to the provided public key and message. Returns 0 if no error encountered, otherwise returns an error code. Sets value of is_verified based of verification outcome.
 #[no_mangle]
-pub extern "C" fn std_verify(signature: & [u8;constants::SIGNATURE_LENGTH], publickey: &[u8;constants::PUBLIC_KEY_LENGTH], message: *const u8, message_length: usize , bb: &mut [u8;1]) -> c_int {
+pub extern "C" fn std_verify(signature: & [u8;constants::SIGNATURE_LENGTH], publickey: &[u8;constants::PUBLIC_KEY_LENGTH], message: *const u8, message_length: usize , is_verified: &mut [u8;1]) -> c_int {
     match std_signature::verify(signature, publickey, message, message_length){
         Err(err) => {
             let error_code = errors::get_error_code(&err);
@@ -105,14 +89,11 @@ pub extern "C" fn std_verify(signature: & [u8;constants::SIGNATURE_LENGTH], publ
             return error_code;
         }
         Ok(b) => {
-            bb[0] = b as u8;
+            is_verified[0] = b as u8;
             return 0;
-            //return errorcode_with_bool{error_code : 0, success : b}
             }
     };
 }
-
-
 
 /// Creates a signature from private key and message. Returns 0 if no error encountered, otherwise returns an error code.
 #[no_mangle]

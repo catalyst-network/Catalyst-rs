@@ -19,11 +19,13 @@
 
 use std::cell::RefCell;
 use crate::constants;
+use crate::helpers;
 
 thread_local!{
     pub static LAST_ERROR: RefCell<Option<Box<failure::Error>>> = RefCell::new(None);
 }
 
+/// Store the most recent error.
 pub fn update_last_error(err: failure::Error) {
 
     error!("Setting LAST_ERROR: {}", err);
@@ -54,3 +56,33 @@ pub fn get_error_code(err : &failure::Error ) -> i32 {
     else {return constants::UNKNOWN_ERROR;}
 }
 
+/// Retrieve length of most recent error string.
+pub fn last_error_length() -> i32 {
+    LAST_ERROR.with(|prev| match *prev.borrow() {
+        Some(ref err) => err.to_string().len() as i32 + 1,
+        None => 0,
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_signature_error(){
+        let bad_result = helpers::get_signature_result_with_error();
+        let err = bad_result.unwrap_err();
+        let x = get_error_code(&err);
+        assert_eq!(x, constants::SIGNATURE_ERROR)
+    }
+
+    #[test]
+    fn test_update_last_error(){
+        let error_length = last_error_length();
+        let bad_result = helpers::get_signature_result_with_error();
+        let err = bad_result.unwrap_err();
+        update_last_error(err);
+        assert_ne!(error_length, last_error_length())
+    }
+
+}
