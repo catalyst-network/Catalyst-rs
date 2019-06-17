@@ -1,4 +1,3 @@
-#![recursion_limit = "1024"]
 // Copyright (c) 2019 Catalyst Network
 //
 // This file is part of Rust.Cryptography.FFI <https://github.com/catalyst-network/catalyst-ffi>
@@ -16,15 +15,17 @@
 // You should have received a copy of the GNU General Public License
 // along with Rust.Cryptography.FFI. If not, see <https://www.gnu.org/licenses/>.
 
-extern crate ed25519_dalek;
-extern crate rand;
-extern crate libc;
-extern crate failure;
-#[macro_use] extern crate log;
+//! Common constants such as buffer sizes for keys and signatures.
 
-mod ffi;
-mod constants;
-mod errors;
-mod std_signature;
-mod keys;
-mod helpers;
+/// The length of a ed25519 `Signature`, in bytes.
+pub const SIGNATURE_LENGTH: usize = 64;
+
+/// The length of a ed25519 `PrivateKey`, in bytes.
+pub const PRIVATE_KEY_LENGTH: usize = 32;
+
+/// The length of an ed25519 `PublicKey`, in bytes.
+pub const PUBLIC_KEY_LENGTH: usize = 32;
+
+pub const SIGNATURE_ERROR : i32 = 101;
+
+pub const UNKNOWN_ERROR : i32 = -1;
