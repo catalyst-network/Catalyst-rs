@@ -1,48 +1,36 @@
+// Copyright (c) 2019 Catalyst Network
+//
+// This file is part of Rust.Cryptography.FFI <https://github.com/catalyst-network/catalyst-ffi>
+//
+// Rust.Cryptography.FFI is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 2 of the License, or
+// (at your option) any later version.
+//
+// Rust.Cryptography.FFI is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Rust.Cryptography.FFI. If not, see <https://www.gnu.org/licenses/>.
+
 //! The foreign function interface which exposes this library to non-Rust 
 //! languages.
 
 use std::ptr;
 use std::slice;
 use libc::{c_char, c_int};
-use std::cell::RefCell;
-
-thread_local!{
-    static LAST_ERROR: RefCell<Option<Box<failure::Error>>> = RefCell::new(None);
-}
-
-pub fn update_last_error(err: failure::Error) {
-    //println!("Got this far!{}", err);
-    
-    error!("Setting LAST_ERROR: {}", err);
-    {
-        //println!("How about here?{}", err);
-        // Print a pseudo-backtrace for this error, following back each error's
-        // cause until we reach the root error.
-        let mut prev = err.as_fail();
-        while let Some(next) = prev.cause() {
-            warn!("Caused by: {}", &next.to_string());
-            prev = next;
-        }
-    }
-
-    LAST_ERROR.with(|prev| {
-        *prev.borrow_mut() = Some(Box::new(err));
-    });
-}
-
-/// Retrieve the most recent error, clearing it in the process.
-pub fn take_last_error() -> Option<Box<failure::Error>> {
-    LAST_ERROR.with(|prev| prev.borrow_mut().take())
-}
+use crate::errors;
+use crate::keys;
+use crate::std_signature;
+use crate::constants;
 
 /// Calculate the number of bytes in the last error's error message **not**
 /// including any trailing `null` characters.
 #[no_mangle]
 pub extern "C" fn last_error_length() -> c_int {
-    LAST_ERROR.with(|prev| match *prev.borrow() {
-        Some(ref err) => err.to_string().len() as c_int + 1,
-        None => 0,
-    })
+    errors::last_error_length()
 }
 
 /// Write the most recent error message into a caller-provided buffer as a UTF-8
@@ -62,8 +50,7 @@ pub unsafe extern "C" fn last_error_message(buffer: *mut c_char, length: c_int) 
         warn!("Null pointer passed into last_error_message() as the buffer");
         return -1;
     }
-
-    let last_error = match take_last_error() {
+    let last_error = match errors::take_last_error() {
         Some(err) => err,
         None => return 0,
     };
@@ -88,9 +75,85 @@ pub unsafe extern "C" fn last_error_message(buffer: *mut c_char, length: c_int) 
         error_message.len(),
     );
 
-    // Add a trailing null so people using the string as a `char *` don't
-    // accidentally read into garbage.
-    //buffer[error_message.len()] = 0;
-
     error_message.len() as c_int
 }
+
+/// Verifies that an ed25519 signature corresponds to the provided public key and message. Returns 0 if no error encountered, otherwise returns an error code. Sets value of is_verified based of verification outcome.
+#[no_mangle]
+pub extern "C" fn std_verify(signature: & [u8;constants::SIGNATURE_LENGTH], publickey: &[u8;constants::PUBLIC_KEY_LENGTH], message: *const u8, message_length: usize , is_verified: &mut [u8;1]) -> c_int {
+    match std_signature::verify(signature, publickey, message, message_length){
+        Err(err) => {
+            let error_code = errors::get_error_code(&err);
+            errors::update_last_error(err);
+            return error_code;
+        }
+        Ok(b) => {
+            is_verified[0] = b as u8;
+            return 0;
+            }
+    };
+}
+
+/// Creates a signature from private key and message. Returns 0 if no error encountered, otherwise returns an error code.
+#[no_mangle]
+pub extern "C" fn std_sign(out_signature: &mut [u8;constants::SIGNATURE_LENGTH], private_key: &[u8;constants::PRIVATE_KEY_LENGTH], message: *const u8, message_length: usize) -> c_int {
+   let _res = match std_signature::sign(out_signature, private_key, message, message_length){
+        Err(err) => {
+            let error_code = errors::get_error_code(&err);
+            errors::update_last_error(err);
+            return error_code;
+        }
+        Ok(()) => {return 0;}
+    };
+}
+
+/// Returns correponding public key, given a private key. Returns 0 if sucessful, otherwise returns an error code.
+#[no_mangle]
+pub extern "C" fn publickey_from_private(out_publickey: &mut [u8;constants::PUBLIC_KEY_LENGTH],private_key: &[u8;constants::PRIVATE_KEY_LENGTH]) -> c_int {
+    let _res = match keys::publickey_from_private(out_publickey, private_key){
+        Err(err) => {
+            let error_code = errors::get_error_code(&err);
+            errors::update_last_error(err);
+            return error_code;
+        }
+        Ok(()) => {return 0;}
+    };
+}
+
+/// Randomly generated private key. Returns 0 if sucessful, otherwise returns an error code.
+#[no_mangle]
+pub extern "C" fn generate_key(out_key: &mut [u8;constants::PRIVATE_KEY_LENGTH]) -> c_int {
+    let _res = match keys::generate_key(out_key){
+        Err(err) => {
+            let error_code = errors::get_error_code(&err);
+            errors::update_last_error(err);
+            return error_code;
+        }
+        Ok(()) => {return 0;}
+    };
+}
+
+#[no_mangle]
+pub extern "C" fn validate_public_key(public_key: &[u8;32]) -> c_int{
+    match keys::validate_public(&public_key){
+        Err(err) => {
+            let error_code = errors::get_error_code(&err);
+            errors::update_last_error(err);
+            return error_code;
+            }
+        Ok(()) => {return 0;}
+    };
+}
+
+#[no_mangle]
+pub extern "C" fn validate_private_key(private_key: &[u8;32]) -> c_int{
+    match keys::validate_private(&private_key){
+        Err(err) => {
+            let error_code = errors::get_error_code(&err);
+            errors::update_last_error(err);
+            return error_code;
+            }
+        Ok(()) => {return 0;}
+    };
+}
+

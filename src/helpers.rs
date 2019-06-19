@@ -1,4 +1,3 @@
-#![recursion_limit = "1024"]
 // Copyright (c) 2019 Catalyst Network
 //
 // This file is part of Rust.Cryptography.FFI <https://github.com/catalyst-network/catalyst-ffi>
@@ -16,15 +15,21 @@
 // You should have received a copy of the GNU General Public License
 // along with Rust.Cryptography.FFI. If not, see <https://www.gnu.org/licenses/>.
 
-extern crate ed25519_dalek;
-extern crate rand;
-extern crate libc;
-extern crate failure;
-#[macro_use] extern crate log;
+//! Provides helper functions.
+use std::result;
+use crate::std_signature;
+use crate::keys;
+use crate::constants;
 
-mod ffi;
-mod constants;
-mod errors;
-mod std_signature;
-mod keys;
-mod helpers;
+type Result<T> = result::Result<T, failure::Error>;
+
+pub fn get_signature_result_with_error() -> Result<bool> {
+    let mut invalid_signature : [u8; constants::SIGNATURE_LENGTH] = [0; constants::SIGNATURE_LENGTH];
+    invalid_signature[63] = 32;
+    let mut private_key : [u8;32] = [0;32];
+    let mut public_key : [u8;32] = [0;32];
+    keys::generate_key(&mut private_key);
+    keys::publickey_from_private(&mut public_key, &mut private_key);
+    let message = String::from("Message text");
+    std_signature::verify(&invalid_signature, &public_key, message.as_ptr(), message.len())
+}
