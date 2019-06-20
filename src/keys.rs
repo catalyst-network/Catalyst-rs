@@ -71,6 +71,5 @@ mod tests {
         let public_key: PublicKey = (&secret_key).into();
         assert_eq!(out_publickey, public_key.to_bytes());
     }
-
 }
 
