@@ -56,7 +56,6 @@ pub unsafe extern "C" fn last_error_message(buffer: *mut c_char, length: c_int) 
     };
 
     let error_message = last_error.to_string();
-    println!("{}", error_message);
 
     let buffer = slice::from_raw_parts_mut(buffer as *mut u8, length as usize);
 
@@ -130,6 +129,30 @@ pub extern "C" fn generate_key(out_key: &mut [u8;constants::PRIVATE_KEY_LENGTH])
             errors::update_last_error(err);
             return error_code;
         }
+        Ok(()) => {return 0;}
+    };
+}
+
+#[no_mangle]
+pub extern "C" fn validate_public_key(public_key: &[u8;32]) -> c_int{
+    match keys::validate_public(&public_key){
+        Err(err) => {
+            let error_code = errors::get_error_code(&err);
+            errors::update_last_error(err);
+            return error_code;
+            }
+        Ok(()) => {return 0;}
+    };
+}
+
+#[no_mangle]
+pub extern "C" fn validate_private_key(private_key: &[u8;32]) -> c_int{
+    match keys::validate_private(&private_key){
+        Err(err) => {
+            let error_code = errors::get_error_code(&err);
+            errors::update_last_error(err);
+            return error_code;
+            }
         Ok(()) => {return 0;}
     };
 }

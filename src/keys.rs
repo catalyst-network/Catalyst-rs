@@ -38,6 +38,16 @@ pub fn generate_key(out_key: &mut [u8;constants::PRIVATE_KEY_LENGTH]) -> Result<
     Ok(())
 }
 
+pub fn validate_public(public_key: &[u8;32]) -> Result<()>{
+    PublicKey::from_bytes(public_key)?;
+    Ok(())
+}
+
+pub fn validate_private(private_key: &[u8;32]) -> Result<()>{
+    SecretKey::from_bytes(private_key)?;
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
