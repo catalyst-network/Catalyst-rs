@@ -54,10 +54,10 @@ mod tests {
 
     #[test]
     fn test_sign_verify(){
-        let initial_sig: [u8;64] = [0;64];
-        let mut out_sig: [u8;64] = Clone::clone(&initial_sig);
+        let initial_sig: [u8;constants::SIGNATURE_LENGTH] = [0;constants::SIGNATURE_LENGTH];
+        let mut out_sig: [u8;constants::SIGNATURE_LENGTH] = Clone::clone(&initial_sig);
 
-        let mut key: [u8;32] = [0;32];
+        let mut key: [u8;constants::PRIVATE_KEY_LENGTH] = [0;constants::PRIVATE_KEY_LENGTH];
         assert!(keys::generate_key(&mut key).is_ok());
         let message = String::from("You are a sacrifice article that I cut up rough now");
         assert!(sign(&mut out_sig, &key, message.as_ptr(), message.len()).is_ok());
@@ -70,10 +70,10 @@ mod tests {
 
     #[test]
     fn test_sign_verify_fails(){
-        let mut out_sig: [u8;64] = [0;64];
+        let mut out_sig: [u8;constants::SIGNATURE_LENGTH] = [0;constants::SIGNATURE_LENGTH];
         let message = String::from("You are a sacrifice article that I cut up rough now");
         let message2 = String::from("Mr. speaker, we are for the big");
-        let mut key: [u8;32] = [0;32];
+        let mut key: [u8;constants::PRIVATE_KEY_LENGTH] = [0;constants::PRIVATE_KEY_LENGTH];
         assert!(keys::generate_key(&mut key).is_ok());
 
         assert!(sign(&mut out_sig, &key, message.as_ptr(), message.len()).is_ok());

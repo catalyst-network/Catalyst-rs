@@ -134,7 +134,7 @@ pub extern "C" fn generate_key(out_key: &mut [u8;constants::PRIVATE_KEY_LENGTH])
 }
 
 #[no_mangle]
-pub extern "C" fn validate_public_key(public_key: &[u8;32]) -> c_int{
+pub extern "C" fn validate_public_key(public_key: &[u8;constants::PUBLIC_KEY_LENGTH]) -> c_int{
     match keys::validate_public(&public_key){
         Err(err) => {
             let error_code = errors::get_error_code(&err);
@@ -146,7 +146,7 @@ pub extern "C" fn validate_public_key(public_key: &[u8;32]) -> c_int{
 }
 
 #[no_mangle]
-pub extern "C" fn validate_private_key(private_key: &[u8;32]) -> c_int{
+pub extern "C" fn validate_private_key(private_key: &[u8;constants::PRIVATE_KEY_LENGTH]) -> c_int{
     match keys::validate_private(&private_key){
         Err(err) => {
             let error_code = errors::get_error_code(&err);
@@ -157,3 +157,20 @@ pub extern "C" fn validate_private_key(private_key: &[u8;32]) -> c_int{
     };
 }
 
+///Returns private key length in bytes
+#[no_mangle]
+pub extern "C" fn get_private_key_length() -> c_int{
+    constants::PRIVATE_KEY_LENGTH as i32
+}
+
+///Returns public key length in bytes
+#[no_mangle]
+pub extern "C" fn get_public_key_length() -> c_int{
+    constants::PUBLIC_KEY_LENGTH as i32
+}
+
+///Returns signature length in bytes
+#[no_mangle]
+pub extern "C" fn get_signature_length() -> c_int{
+    constants::SIGNATURE_LENGTH as i32
+}
