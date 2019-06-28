@@ -24,7 +24,7 @@ use std::result;
 
 pub type Result<T> = result::Result<T, failure::Error>;
 
-pub fn publickey_from_private(out_publickey: &mut [u8;constants::PUBLIC_KEY_LENGTH],private_key: &[u8;constants::PRIVATE_KEY_LENGTH]) -> Result<()> {
+pub fn publickey_from_private(out_publickey: &mut [u8;constants::PUBLIC_KEY_LENGTH], private_key: &[u8;constants::PRIVATE_KEY_LENGTH]) -> Result<()> {
     let secret_key: SecretKey = SecretKey::from_bytes(private_key)?;
     let public_key: PublicKey = (&secret_key).into();
     out_publickey.copy_from_slice(&public_key.to_bytes());
@@ -38,12 +38,12 @@ pub fn generate_key(out_key: &mut [u8;constants::PRIVATE_KEY_LENGTH]) -> Result<
     Ok(())
 }
 
-pub fn validate_public(public_key: &[u8;32]) -> Result<()>{
+pub fn validate_public(public_key: &[u8;constants::PUBLIC_KEY_LENGTH]) -> Result<()>{
     PublicKey::from_bytes(public_key)?;
     Ok(())
 }
 
-pub fn validate_private(private_key: &[u8;32]) -> Result<()>{
+pub fn validate_private(private_key: &[u8; constants::PRIVATE_KEY_LENGTH]) -> Result<()>{
     SecretKey::from_bytes(private_key)?;
     Ok(())
 }
