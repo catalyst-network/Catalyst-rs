@@ -50,6 +50,7 @@ pub fn take_last_error() -> Option<Box<failure::Error>> {
 
 /// Retrieve error code corresponding to error type.
 pub fn get_error_code(err : &failure::Error ) -> i32 {
+    println!("{}", err.as_fail());
     if let Some(_) = err.downcast_ref::<ed25519_dalek::SignatureError>() {
         return constants::SIGNATURE_ERROR;
     }
