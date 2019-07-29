@@ -53,7 +53,7 @@ mod tests {
     use super::*;
     
     #[test]
-    fn test_generate_key(){
+    fn can_generate_private_key(){
         let initial_key: [u8;constants::PRIVATE_KEY_LENGTH] = [0;constants::PRIVATE_KEY_LENGTH];
         let mut out_key: [u8;constants::PRIVATE_KEY_LENGTH] = Clone::clone(&initial_key);
         assert_eq!(out_key,initial_key, "arrays should be the same");
@@ -62,7 +62,7 @@ mod tests {
     }
 
     #[test]
-    fn test_publickey_from_private(){
+    fn can_get_public_key_from_private_key(){
         let mut privatekey: [u8;constants::PRIVATE_KEY_LENGTH] = [0;constants::PRIVATE_KEY_LENGTH];
         assert!(generate_key(&mut privatekey).is_ok());
         let mut out_publickey: [u8;constants::PUBLIC_KEY_LENGTH] = [0;constants::PUBLIC_KEY_LENGTH];

@@ -31,5 +31,6 @@ pub fn get_signature_result_with_error() -> Result<bool> {
     keys::generate_key(&mut private_key);
     keys::publickey_from_private(&mut public_key, &mut private_key);
     let message = String::from("Message text");
-    std_signature::verify(&invalid_signature, &public_key, message.as_ptr(), message.len())
+    let context = String::from("Context text");
+    std_signature::verify(&invalid_signature, &public_key, message.as_ptr(), message.len(), context.as_ptr(), context.len())
 }

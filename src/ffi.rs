@@ -87,9 +87,10 @@ pub extern "C" fn std_verify(signature: & [u8;constants::SIGNATURE_LENGTH],
                              context: *const u8, 
                              context_length: usize,  
                              is_verified: &mut [u8;1]) -> c_int {
-    let result = std_signature::verify_with_context(signature, publickey, message, message_length, context, context_length);
-    result.and_then(|b: bool| {is_verified[0] = b as u8; Ok(b)});
-    result.get_ffi_return_code()
+    let result = std_signature::verify(signature, publickey, message, message_length, context, context_length);
+    result
+        .map(|b: bool| {is_verified[0] = b as u8; ()})
+        .ffi_return_code()
 }
 
 /// Creates a signature from private key and message. Returns 0 if no error encountered, otherwise returns an error code.
@@ -100,33 +101,31 @@ pub extern "C" fn std_sign(out_signature: &mut [u8;constants::SIGNATURE_LENGTH],
                            message_length: usize,
                            context: *const u8, 
                            context_length: usize) -> c_int {
-    let result = std_signature::sign_with_context(out_signature, private_key, message, message_length, context, context_length);
-    result.get_ffi_return_code()
+    let result = std_signature::sign(out_signature, private_key, message, message_length, context, context_length);
+    result.ffi_return_code()
 }
 
 /// Returns correponding public key, given a private key. Returns 0 if sucessful, otherwise returns an error code.
 #[no_mangle]
 pub extern "C" fn publickey_from_private(out_publickey: &mut [u8;constants::PUBLIC_KEY_LENGTH],private_key: &[u8;constants::PRIVATE_KEY_LENGTH]) -> c_int {
     let result = keys::publickey_from_private(out_publickey, private_key);
-    result.get_ffi_return_code()
+    result.ffi_return_code()
 }
 
 /// Randomly generated private key. Returns 0 if sucessful, otherwise returns an error code.
 #[no_mangle]
 pub extern "C" fn generate_key(out_key: &mut [u8;constants::PRIVATE_KEY_LENGTH]) -> c_int {
-    let result = keys::generate_key(out_key);
-    result.get_ffi_return_code()
+    keys::generate_key(out_key).ffi_return_code()
 }
 
 #[no_mangle]
 pub extern "C" fn validate_public_key(public_key: &[u8;constants::PUBLIC_KEY_LENGTH]) -> c_int{
-    let result = keys::validate_public(&public_key);
-    result.get_ffi_return_code()
+    keys::validate_public(&public_key).ffi_return_code()
 }
 
 #[no_mangle]
 pub extern "C" fn validate_private_key(private_key: &[u8;constants::PRIVATE_KEY_LENGTH]) -> c_int{
-    keys::validate_private(&private_key).get_ffi_return_code()
+    keys::validate_private(&private_key).ffi_return_code()
 }
 
 ///Returns private key length in bytes
@@ -147,12 +146,18 @@ pub extern "C" fn get_signature_length() -> c_int{
     constants::SIGNATURE_LENGTH as i32
 }
 
-pub trait ResultEx<T>{
-    fn get_ffi_return_code(self) -> c_int;
+///Returns max context length in bytes
+#[no_mangle]
+pub extern "C" fn get_max_context_length() -> c_int{
+    constants::CONTEXT_MAX_LENGTH as i32
 }
 
-impl<T> ResultEx<T> for Result<T,failure::Error> {
-    fn get_ffi_return_code(self) -> c_int{
+pub trait ResultEx{
+    fn ffi_return_code(self) -> c_int;
+}
+
+impl ResultEx for Result<(),failure::Error> {
+    fn ffi_return_code(self) -> c_int{
         match self{
             Err(err) => {
                 let error_code = errors::get_error_code(&err);
@@ -162,24 +167,37 @@ impl<T> ResultEx<T> for Result<T,failure::Error> {
             Ok(_t) => {
                 return 0
             }
-        };    
-    }
-}
+        }; 
+    } 
+}  
+
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::helpers;
+    
     #[test]
-    fn test_sign_verify_with_context(){
+    fn can_throw_context_length_error(){
+        
         let initial_sig: [u8;constants::SIGNATURE_LENGTH] = [0;constants::SIGNATURE_LENGTH];
         let mut out_sig: [u8;constants::SIGNATURE_LENGTH] = Clone::clone(&initial_sig);
+        
+        let context : Vec<u8> = (0..256).map(|_| { rand::random::<u8>() }).collect();
+        println!("********* context length is: {}", context.len());
 
         let mut key: [u8;constants::PRIVATE_KEY_LENGTH] = [0;constants::PRIVATE_KEY_LENGTH];
         assert!(keys::generate_key(&mut key).is_ok());
         let message = String::from("You are a sacrifice article that I cut up rough now");
-        let context = String::from("This is a free online calculator which counts the number of characters or letters in a text, useful for your tweets on Twitter, as well as a multitude of other applications. Whether it is Snapchat, Twitter, Facebook, Yelp or just a note to co-workers or business officials, the number of actual characters matters. ");
-        assert_eq!(std_sign(&mut out_sig, &key, message.as_ptr(), message.len(), context.as_ptr(), context.len()), 2);
+        let error_code = std_sign(&mut out_sig, &key, message.as_ptr(), message.len(), context.as_ptr(), context.len());
+        assert_eq!(error_code, constants::CONTEXT_LENGTH_ERROR);
+    }
 
-        
+    #[test]
+    fn can_throw_signature_error(){
+        let bad_result = helpers::get_signature_result_with_error();
+        let err = bad_result.unwrap_err();
+        let error_code = errors::get_error_code(&err);
+        assert_eq!(error_code, constants::SIGNATURE_ERROR)
     }
 }

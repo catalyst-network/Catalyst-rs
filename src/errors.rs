@@ -19,7 +19,17 @@
 
 use std::cell::RefCell;
 use crate::constants;
-use crate::helpers;
+use std::fmt;
+
+
+#[derive(Fail, Debug)]
+pub struct ContextLengthError;
+
+impl fmt::Display for ContextLengthError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "The context length should be less than {} bytes.", constants::CONTEXT_MAX_LENGTH)
+    }
+}
 
 thread_local!{
     pub static LAST_ERROR: RefCell<Option<Box<failure::Error>>> = RefCell::new(None);
@@ -54,6 +64,9 @@ pub fn get_error_code(err : &failure::Error ) -> i32 {
     if let Some(_) = err.downcast_ref::<ed25519_dalek::SignatureError>() {
         return constants::SIGNATURE_ERROR;
     }
+    if let Some(_) = err.downcast_ref::<ContextLengthError>() {
+        return constants::CONTEXT_LENGTH_ERROR;
+    }
     else {return constants::UNKNOWN_ERROR;}
 }
 
@@ -68,22 +81,14 @@ pub fn last_error_length() -> i32 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::helpers;
 
     #[test]
-    fn test_signature_error(){
-        let bad_result = helpers::get_signature_result_with_error();
-        let err = bad_result.unwrap_err();
-        let x = get_error_code(&err);
-        assert_eq!(x, constants::SIGNATURE_ERROR)
-    }
-
-    #[test]
-    fn test_update_last_error(){
+    fn can_update_latest_error(){
         let error_length = last_error_length();
         let bad_result = helpers::get_signature_result_with_error();
         let err = bad_result.unwrap_err();
         update_last_error(err);
         assert_ne!(error_length, last_error_length())
     }
-
 }

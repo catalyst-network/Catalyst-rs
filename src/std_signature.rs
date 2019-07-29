@@ -20,36 +20,13 @@
 use ed25519_dalek::*;
 use std::slice;
 use std::result;
-use crate::constants;
-use crate::keys;
 use failure;
+use crate::constants;
+use crate::errors;
 
 type Result<T> = result::Result<T, failure::Error>;
 
-pub fn verify(signature: & [u8;constants::SIGNATURE_LENGTH], publickey: &[u8;constants::PUBLIC_KEY_LENGTH], message: *const u8, message_length: usize) -> Result<bool>{
-   let message_array = unsafe {
-        assert!(!message.is_null());
-        slice::from_raw_parts(message, message_length)
-    };
-    let public_key: PublicKey = PublicKey::from_bytes(publickey)?;
-    let signature: Signature = Signature::from_bytes(signature)?;
-    Ok(public_key.verify(message_array, &signature).is_ok())
-}
-
-pub fn sign(out_signature: &mut [u8;constants::SIGNATURE_LENGTH], private_key: &[u8;constants::PRIVATE_KEY_LENGTH], message: *const u8, message_length: usize) -> Result<()>{
-   let message_array = unsafe {
-        assert!(!message.is_null());
-        slice::from_raw_parts(message, message_length)
-    };
-    let secret_key: SecretKey = SecretKey::from_bytes(private_key)?;
-    let public_key: PublicKey = (&secret_key).into();
-    let keypair: Keypair  = Keypair{ secret: secret_key, public: public_key };
-    let signature: Signature = keypair.sign(message_array);
-    out_signature.copy_from_slice(&signature.to_bytes());
-    Ok(())
-}
-
-pub fn sign_with_context(out_signature: &mut [u8;constants::SIGNATURE_LENGTH], 
+pub fn sign(out_signature: &mut [u8;constants::SIGNATURE_LENGTH], 
                          private_key: &[u8;constants::PRIVATE_KEY_LENGTH], 
                          message: *const u8, 
                          message_length: usize, 
@@ -67,7 +44,7 @@ pub fn sign_with_context(out_signature: &mut [u8;constants::SIGNATURE_LENGTH],
     };
 
     if context_array.len() > 255 {
-        bail!("Ahh")
+        Err(errors::ContextLengthError)?;
     }
 
     let secret_key: SecretKey = SecretKey::from_bytes(private_key)?;
@@ -80,7 +57,7 @@ pub fn sign_with_context(out_signature: &mut [u8;constants::SIGNATURE_LENGTH],
     Ok(())
 }
 
-pub fn verify_with_context(signature: & [u8;constants::SIGNATURE_LENGTH], 
+pub fn verify(signature: & [u8;constants::SIGNATURE_LENGTH], 
                            publickey: &[u8;constants::PUBLIC_KEY_LENGTH], 
                            message: *const u8, 
                            message_length: usize,
@@ -97,8 +74,6 @@ pub fn verify_with_context(signature: & [u8;constants::SIGNATURE_LENGTH],
         slice::from_raw_parts(context, context_length)
     };
 
-
-
     let public_key: PublicKey = PublicKey::from_bytes(publickey)?;
     let signature: Signature = Signature::from_bytes(signature)?;
     let mut prehashed: Sha512 = Sha512::new();
@@ -109,55 +84,37 @@ pub fn verify_with_context(signature: & [u8;constants::SIGNATURE_LENGTH],
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::keys;
 
     #[test]
-    fn test_sign_verify(){
+    fn can_sign_message_and_verify_signature(){
         let initial_sig: [u8;constants::SIGNATURE_LENGTH] = [0;constants::SIGNATURE_LENGTH];
         let mut out_sig: [u8;constants::SIGNATURE_LENGTH] = Clone::clone(&initial_sig);
 
         let mut key: [u8;constants::PRIVATE_KEY_LENGTH] = [0;constants::PRIVATE_KEY_LENGTH];
         assert!(keys::generate_key(&mut key).is_ok());
         let message = String::from("You are a sacrifice article that I cut up rough now");
-        assert!(sign(&mut out_sig, &key, message.as_ptr(), message.len()).is_ok());
+        let context = String::from("Context 1 2 3");
+        assert!(sign(&mut out_sig, &key, message.as_ptr(), message.len(), context.as_ptr(), context.len()).is_ok());
 
         let secret_key: SecretKey = SecretKey::from_bytes(&key).expect("failed to create private key");
         let public_key: PublicKey = (&secret_key).into();
-        assert_eq!(verify(&out_sig, &PublicKey::to_bytes(&public_key),message.as_ptr(), message.len()).unwrap(), true);
+        assert_eq!(verify(&out_sig, &PublicKey::to_bytes(&public_key),message.as_ptr(), message.len(), context.as_ptr(), context.len()).unwrap(), true);
     }
 
     #[test]
-    fn test_sign_verify_with_context(){
+    fn can_sign_message_and_verify_signature_with_empty_context(){
         let initial_sig: [u8;constants::SIGNATURE_LENGTH] = [0;constants::SIGNATURE_LENGTH];
         let mut out_sig: [u8;constants::SIGNATURE_LENGTH] = Clone::clone(&initial_sig);
 
         let mut key: [u8;constants::PRIVATE_KEY_LENGTH] = [0;constants::PRIVATE_KEY_LENGTH];
         assert!(keys::generate_key(&mut key).is_ok());
         let message = String::from("You are a sacrifice article that I cut up rough now");
-        let context = String::from("TThis is a free online calculator which counts the number of characters or letters in a text, useful for your tweets on Twitter, as well as a multitude of other applications. Whether it is Snapchat, Twitter, Facebook, Yelp or just a note to co-workers or business officials, the number of actual characters matters. ");
-        assert!(sign_with_context(&mut out_sig, &key, message.as_ptr(), message.len(), context.as_ptr(), context.len()).is_ok());
+        let context = String::from("");
+        assert!(sign(&mut out_sig, &key, message.as_ptr(), message.len(), context.as_ptr(), context.len()).is_ok());
 
         let secret_key: SecretKey = SecretKey::from_bytes(&key).expect("failed to create private key");
         let public_key: PublicKey = (&secret_key).into();
-        assert_eq!(verify_with_context(&out_sig, &PublicKey::to_bytes(&public_key),message.as_ptr(), message.len(), context.as_ptr(), context.len()).unwrap(), true);
+        assert_eq!(verify(&out_sig, &PublicKey::to_bytes(&public_key),message.as_ptr(), message.len(), context.as_ptr(), context.len()).unwrap(), true);
     }
-
-    #[test]
-    fn test_sign_verify_fails(){
-        let mut out_sig: [u8;constants::SIGNATURE_LENGTH] = [0;constants::SIGNATURE_LENGTH];
-        let message = String::from("You are a sacrifice article that I cut up rough now");
-        let message2 = String::from("Mr. speaker, we are for the big");
-        let mut key: [u8;constants::PRIVATE_KEY_LENGTH] = [0;constants::PRIVATE_KEY_LENGTH];
-        assert!(keys::generate_key(&mut key).is_ok());
-
-        assert!(sign(&mut out_sig, &key, message.as_ptr(), message.len()).is_ok());
-
-        let secret_key: SecretKey = SecretKey::from_bytes(&key).expect("failed to create private key");
-        let public_key: PublicKey = (&secret_key).into();
-        assert!(verify(&out_sig, &PublicKey::to_bytes(&public_key),message.as_ptr(), message.len()).is_ok());
-        assert_eq!(verify(&out_sig, &PublicKey::to_bytes(&public_key),message2.as_ptr(), message2.len()).unwrap(),false);
-    }
-
-
-
-
 }
