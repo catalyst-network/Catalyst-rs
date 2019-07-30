@@ -19,7 +19,7 @@
 extern crate ed25519_dalek;
 extern crate rand;
 extern crate libc;
-extern crate failure;
+#[macro_use] extern crate failure;
 #[macro_use] extern crate log;
 
 mod ffi;
