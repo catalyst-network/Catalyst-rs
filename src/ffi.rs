@@ -87,7 +87,7 @@ pub extern "C" fn std_verify(signature: & [u8;constants::SIGNATURE_LENGTH],
                              context: *const u8, 
                              context_length: usize,  
                              is_verified: &mut [u8;1]) -> c_int {
-    let result = std_signature::verify(signature, publickey, message, message_length, context, context_length);
+    let result = std_signature::unwrap_and_verify(signature, publickey, message, message_length, context, context_length);
     result
         .map(|b: bool| {is_verified[0] = b as u8; ()})
         .ffi_return_code()
@@ -101,7 +101,7 @@ pub extern "C" fn std_sign(out_signature: &mut [u8;constants::SIGNATURE_LENGTH],
                            message_length: usize,
                            context: *const u8, 
                            context_length: usize) -> c_int {
-    let result = std_signature::sign(out_signature, private_key, message, message_length, context, context_length);
+    let result = std_signature::unwrap_and_sign(out_signature, private_key, message, message_length, context, context_length);
     result.ffi_return_code()
 }
 
@@ -175,7 +175,7 @@ impl ResultEx for Result<(),failure::Error> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::helpers;
+    use crate::helpers::tests;
     
     #[test]
     fn can_throw_context_length_error(){
@@ -195,7 +195,7 @@ mod tests {
 
     #[test]
     fn can_throw_signature_error(){
-        let bad_result = helpers::get_signature_result_with_error();
+        let bad_result = tests::get_signature_result_with_error();
         let err = bad_result.unwrap_err();
         let error_code = errors::get_error_code(&err);
         assert_eq!(error_code, constants::SIGNATURE_ERROR)

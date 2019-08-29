@@ -22,9 +22,11 @@ extern crate libc;
 #[macro_use] extern crate failure;
 #[macro_use] extern crate log;
 
+pub use ed25519_dalek::{SecretKey, PublicKey, Signature, Keypair};
+
+pub mod std_signature;
+pub mod constants;
 mod ffi;
-mod constants;
 mod errors;
-mod std_signature;
 mod keys;
 mod helpers;

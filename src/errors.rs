@@ -81,12 +81,12 @@ pub fn last_error_length() -> i32 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::helpers;
+    use crate::helpers::tests;
 
     #[test]
     fn can_update_latest_error(){
         let error_length = last_error_length();
-        let bad_result = helpers::get_signature_result_with_error();
+        let bad_result = tests::get_signature_result_with_error();
         let err = bad_result.unwrap_err();
         update_last_error(err);
         assert_ne!(error_length, last_error_length())
