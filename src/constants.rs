@@ -28,7 +28,7 @@ pub const PUBLIC_KEY_LENGTH: usize = 32;
 
 pub const CONTEXT_MAX_LENGTH: usize = 255;
 
-pub const BULLETPROOF_N: usize = 64;
+pub const BULLETPROOF_N: usize = 63;
 
 //see if we can state this in terms of BULLETPROOF_N
 pub const BULLETPROOF_SIZE: usize = 672;
@@ -45,5 +45,7 @@ pub const BULLETPROOF_BLINDING_LENGTH: usize = 32;
 pub const SIGNATURE_ERROR : i32 = 101;
 
 pub const CONTEXT_LENGTH_ERROR: i32 = 201;
+
+pub const BULLETPROOF_INVALID_BITSIZE_ERROR: i32 = 301;
 
 pub const UNKNOWN_ERROR : i32 = -1;

@@ -23,10 +23,11 @@ use std::slice;
 use libc::{c_char, c_int};
 use log::warn;
 use crate::errors;
+use crate::error_codes;
 use crate::keys;
 use crate::std_signature;
 use crate::constants;
-use crate::bulletproofs;
+use crate::bulletproof;
 use crate::extensions::ResultEx;
 
 
@@ -116,9 +117,8 @@ pub extern "C" fn bulletproof_single(out_proof: &mut [u8; constants::BULLETPROOF
                            secret_value: u64,
                            blinding: &[u8;32],
                            context: *const u8, 
-                           context_length: usize) -> c_int {
-    println!("got to here");                           
-    let result = bulletproofs::unwrap_and_bulletproof(out_proof, secret_value, blinding, context, context_length);
+                           context_length: usize) -> c_int {                          
+    let result = bulletproof::unwrap_and_bulletproof(out_proof, secret_value, blinding, context, context_length);
     
     result.ffi_return_code()
 }
@@ -197,14 +197,14 @@ mod tests {
         assert!(keys::generate_key(&mut key).is_ok());
         let message = String::from("You are a sacrifice article that I cut up rough now");
         let error_code = std_sign(&mut out_sig, &key, message.as_ptr(), message.len(), context.as_ptr(), context.len());
-        assert_eq!(error_code, constants::CONTEXT_LENGTH_ERROR);
+        assert_eq!(error_code, error_codes::CONTEXT_LENGTH_ERROR);
     }
 
     #[test]
     fn can_throw_signature_error(){
         let bad_result = tests::get_signature_result_with_error();
         let err = bad_result.unwrap_err();
-        let error_code = errors::get_error_code(&err);
-        assert_eq!(error_code, constants::SIGNATURE_ERROR)
+        let error_code = error_codes::get_error_code(&err);
+        assert_eq!(error_code, error_codes::SIGNATURE_ERROR)
     }
 }

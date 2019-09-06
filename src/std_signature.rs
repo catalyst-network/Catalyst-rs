@@ -21,7 +21,7 @@ use std::slice;
 use std::result;
 use failure;
 use crate::constants;
-use crate::errors;
+use crate::custom_errors;
 use ed25519_dalek::{Sha512, Digest};
 use super::{SecretKey, PublicKey, Signature, Keypair};
 
@@ -45,7 +45,7 @@ pub(crate) fn unwrap_and_sign(out_signature: &mut [u8;constants::SIGNATURE_LENGT
     };
 
     if context.len() > constants::CONTEXT_MAX_LENGTH {
-        Err(errors::ContextLengthError)?;
+        Err(custom_errors::ContextLengthError)?;
     }
 
     let secret_key: SecretKey = SecretKey::from_bytes(private_key)?;

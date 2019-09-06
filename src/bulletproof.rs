@@ -34,7 +34,7 @@ pub fn create_bulletproof(secret_value: u64, blinding: &Scalar) -> Result<RangeP
         secret_value,
         blinding,
         constants::BULLETPROOF_N,
-    ).expect("A real program could handle errors");
+    )?;
     Ok(proof)
 }
 

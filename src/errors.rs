@@ -18,20 +18,7 @@
 //! functionality for querying the most recent error and retrieving error codes based on an error type.
 
 use std::cell::RefCell;
-use crate::constants;
-use std::fmt;
-use failure::Fail;
 use log::{warn, error};
-
-
-#[derive(Fail, Debug)]
-pub struct ContextLengthError;
-
-impl fmt::Display for ContextLengthError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "The context length should be less than {} bytes.", constants::CONTEXT_MAX_LENGTH)
-    }
-}
 
 thread_local!{
     pub static LAST_ERROR: RefCell<Option<Box<failure::Error>>> = RefCell::new(None);
@@ -58,18 +45,6 @@ pub fn update_last_error(err: failure::Error) {
 /// Retrieve the most recent error, clearing it in the process.
 pub(crate) fn take_last_error() -> Option<Box<failure::Error>> {
     LAST_ERROR.with(|prev| prev.borrow_mut().take())
-}
-
-/// Retrieve error code corresponding to error type.
-pub(crate) fn get_error_code(err : &failure::Error ) -> i32 {
-    println!("{}", err.as_fail());
-    if let Some(_) = err.downcast_ref::<ed25519_dalek::SignatureError>() {
-        return constants::SIGNATURE_ERROR;
-    }
-    if let Some(_) = err.downcast_ref::<ContextLengthError>() {
-        return constants::CONTEXT_LENGTH_ERROR;
-    }
-    else {return constants::UNKNOWN_ERROR;}
 }
 
 /// Retrieve length of most recent error string.
