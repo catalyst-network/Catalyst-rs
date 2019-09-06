@@ -66,6 +66,7 @@ pub(crate) fn unwrap_and_bulletproof(out_rangeproof: &mut [u8;constants::BULLETP
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rand::thread_rng;
 
     #[test]
     fn can_create_bulletproof(){
