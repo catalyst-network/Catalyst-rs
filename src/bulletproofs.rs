@@ -1,17 +1,9 @@
-extern crate rand;
-
-use rand::thread_rng;
 use std::slice;
 use std::result;
 use failure;
 
-extern crate curve25519_dalek;
 use curve25519_dalek::scalar::Scalar;
-
-extern crate merlin;
 use merlin::Transcript;
-
-extern crate bulletproofs;
 use bulletproofs::{BulletproofGens, PedersenGens, RangeProof};
 
 use crate::constants;
@@ -32,7 +24,6 @@ pub fn create_bulletproof(secret_value: u64, blinding: &Scalar) -> Result<RangeP
     // Here we create a transcript with a doctest domain separator.
     let mut prover_transcript = Transcript::new(b"doctest example");
 
-    // Create a 32-bit rangeproof.
     let (proof, committed_value) = RangeProof::prove_single(
         &bp_gens,
         &pc_gens,

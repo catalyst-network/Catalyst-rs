@@ -21,12 +21,14 @@
 use std::ptr;
 use std::slice;
 use libc::{c_char, c_int};
+use log::warn;
 use crate::errors;
 use crate::keys;
 use crate::std_signature;
 use crate::constants;
 use crate::bulletproofs;
 use crate::extensions::ResultEx;
+
 
 /// Calculate the number of bytes in the last error's error message **not**
 /// including any trailing `null` characters.

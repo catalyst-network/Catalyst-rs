@@ -1,4 +1,5 @@
 #![recursion_limit = "1024"]
+#![feature(const_fn)]
 // Copyright (c) 2019 Catalyst Network
 //
 // This file is part of Rust.Cryptography.FFI <https://github.com/catalyst-network/catalyst-ffi>
@@ -15,12 +16,6 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Rust.Cryptography.FFI. If not, see <https://www.gnu.org/licenses/>.
-
-extern crate ed25519_dalek;
-extern crate rand;
-extern crate libc;
-#[macro_use] extern crate failure;
-#[macro_use] extern crate log;
 
 pub use ed25519_dalek::{SecretKey, PublicKey, Signature, Keypair};
 

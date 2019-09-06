@@ -1,5 +1,5 @@
 use crate::errors;
-use libc::{c_char, c_int};
+use libc::c_int;
 
 pub trait ResultEx{
     fn ffi_return_code(self) -> c_int;

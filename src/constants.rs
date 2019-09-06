@@ -1,4 +1,3 @@
-#![feature(const_fn)]
 // Copyright (c) 2019 Catalyst Network
 //
 // This file is part of Rust.Cryptography.FFI <https://github.com/catalyst-network/catalyst-ffi>

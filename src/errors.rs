@@ -20,6 +20,8 @@
 use std::cell::RefCell;
 use crate::constants;
 use std::fmt;
+use failure::Fail;
+use log::{warn, error};
 
 
 #[derive(Fail, Debug)]
@@ -54,12 +56,12 @@ pub fn update_last_error(err: failure::Error) {
 }
 
 /// Retrieve the most recent error, clearing it in the process.
-pub fn take_last_error() -> Option<Box<failure::Error>> {
+pub(crate) fn take_last_error() -> Option<Box<failure::Error>> {
     LAST_ERROR.with(|prev| prev.borrow_mut().take())
 }
 
 /// Retrieve error code corresponding to error type.
-pub fn get_error_code(err : &failure::Error ) -> i32 {
+pub(crate) fn get_error_code(err : &failure::Error ) -> i32 {
     println!("{}", err.as_fail());
     if let Some(_) = err.downcast_ref::<ed25519_dalek::SignatureError>() {
         return constants::SIGNATURE_ERROR;
