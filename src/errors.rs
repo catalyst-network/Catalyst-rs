@@ -71,7 +71,7 @@ pub fn get_error_code(err : &failure::Error ) -> i32 {
 }
 
 /// Retrieve length of most recent error string.
-pub fn last_error_length() -> i32 {
+pub(crate) fn last_error_length() -> i32 {
     LAST_ERROR.with(|prev| match *prev.borrow() {
         Some(ref err) => err.to_string().len() as i32 + 1,
         None => 0,

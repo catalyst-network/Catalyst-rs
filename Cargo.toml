@@ -14,6 +14,8 @@ bincode = "^0.9"
 libc = "^0.2"
 log = "0.4"
 failure = "0.1.5"
+merlin = "1.2.0"
+bulletproofs = "1.0.4"
 
 [lib]
 name = "catalystffi"
@@ -21,4 +23,4 @@ path = "src/lib.rs"
 crate-type = ["cdylib", "lib"]
 
 [profile.dev]
-opt-level = 3 
+opt-level = 0 

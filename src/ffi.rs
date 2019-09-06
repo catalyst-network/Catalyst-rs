@@ -25,6 +25,8 @@ use crate::errors;
 use crate::keys;
 use crate::std_signature;
 use crate::constants;
+use crate::bulletproofs;
+use crate::extensions::ResultEx;
 
 /// Calculate the number of bytes in the last error's error message **not**
 /// including any trailing `null` characters.
@@ -100,8 +102,22 @@ pub extern "C" fn std_sign(out_signature: &mut [u8;constants::SIGNATURE_LENGTH],
                            message: *const u8, 
                            message_length: usize,
                            context: *const u8, 
-                           context_length: usize) -> c_int {
+                           context_length: usize
+                           ) -> c_int {
     let result = std_signature::unwrap_and_sign(out_signature, private_key, message, message_length, context, context_length);
+    result.ffi_return_code()
+}
+
+/// Creates a signature from private key and message. Returns 0 if no error encountered, otherwise returns an error code.
+#[no_mangle]
+pub extern "C" fn bulletproof_single(out_proof: &mut [u8; constants::BULLETPROOF_SIZE], 
+                           secret_value: u64,
+                           blinding: &[u8;32],
+                           context: *const u8, 
+                           context_length: usize) -> c_int {
+    println!("got to here");                           
+    let result = bulletproofs::unwrap_and_bulletproof(out_proof, secret_value, blinding, context, context_length);
+    
     result.ffi_return_code()
 }
 
@@ -152,24 +168,13 @@ pub extern "C" fn get_max_context_length() -> c_int{
     constants::CONTEXT_MAX_LENGTH as i32
 }
 
-pub trait ResultEx{
-    fn ffi_return_code(self) -> c_int;
+///Returns signature length in bytes
+#[no_mangle]
+pub extern "C" fn get_bulletproof_length() -> c_int{
+    constants::BULLETPROOF_SIZE as i32
 }
 
-impl ResultEx for Result<(),failure::Error> {
-    fn ffi_return_code(self) -> c_int{
-        match self{
-            Err(err) => {
-                let error_code = errors::get_error_code(&err);
-                errors::update_last_error(err);
-                return error_code;
-            }
-            Ok(_t) => {
-                return 0
-            }
-        }; 
-    } 
-}  
+
 
 
 #[cfg(test)]

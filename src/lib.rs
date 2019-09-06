@@ -26,7 +26,9 @@ pub use ed25519_dalek::{SecretKey, PublicKey, Signature, Keypair};
 
 pub mod std_signature;
 pub mod constants;
+mod bulletproofs;
 mod ffi;
 mod errors;
 mod keys;
 mod helpers;
+mod extensions;
