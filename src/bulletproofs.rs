@@ -7,14 +7,17 @@ use merlin::Transcript;
 use bulletproofs::{BulletproofGens, PedersenGens, RangeProof};
 
 use crate::constants;
+use lazy_static::lazy_static;
+
+lazy_static! {
+    
+    // Generators for Pedersen commitments.
+    pub static ref PC_GENS : PedersenGens = PedersenGens::default();
+}
 
 type Result<T> = result::Result<T, failure::Error>;
 
 pub fn create_bulletproof(secret_value: u64, blinding: &Scalar) -> Result<RangeProof>{
-
-    // Generators for Pedersen commitments.  These can be selected
-    // independently of the Bulletproofs generators.
-    let pc_gens = PedersenGens::default();
 
     // Generators for Bulletproofs, valid for proofs up to bitsize 64
     // and aggregation size up to 1.
@@ -26,7 +29,7 @@ pub fn create_bulletproof(secret_value: u64, blinding: &Scalar) -> Result<RangeP
 
     let (proof, committed_value) = RangeProof::prove_single(
         &bp_gens,
-        &pc_gens,
+        &PC_GENS,
         &mut prover_transcript,
         secret_value,
         blinding,
