@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Rust.Cryptography.FFI. If not, see <https://www.gnu.org/licenses/>.
 
-//! ed25519 signatures and verification.
+//! Ed25519ph signatures and verification.
 
 use std::slice;
 use std::result;
@@ -56,7 +56,7 @@ pub(crate) fn unwrap_and_sign(out_signature: &mut [u8;constants::SIGNATURE_LENGT
     out_signature.copy_from_slice(&signature.to_bytes());
     Ok(())
 }
-
+/// Creates an ed25519ph signature from private key, context and message.
 pub fn sign(secret: SecretKey, public: PublicKey, message: &[u8], context: Option<&'static [u8]>)
 -> Result<Signature> {
     let keypair: Keypair = Keypair { secret, public };
@@ -89,6 +89,7 @@ pub(crate) fn unwrap_and_verify(signature: & [u8;constants::SIGNATURE_LENGTH],
     
 }
 
+/// Verifies that an ed25519ph signature corresponds to the provided public key, message, and context.
 pub fn verify(signature: Signature, public: PublicKey, message: &[u8], context: Option<&'static [u8]>)
 -> Result<bool> {
     let mut prehashed: Sha512 = Sha512::new();

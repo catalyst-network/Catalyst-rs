@@ -118,14 +118,10 @@ pub extern "C" fn generate_key(out_key: &mut [u8;constants::PRIVATE_KEY_LENGTH])
     keys::generate_key(out_key).ffi_return_code()
 }
 
+/// Checks that the bytes provided represent a valid public key. Returns 0 if successful, otherwise returns error code.
 #[no_mangle]
 pub extern "C" fn validate_public_key(public_key: &[u8;constants::PUBLIC_KEY_LENGTH]) -> c_int{
     keys::validate_public(&public_key).ffi_return_code()
-}
-
-#[no_mangle]
-pub extern "C" fn validate_private_key(private_key: &[u8;constants::PRIVATE_KEY_LENGTH]) -> c_int{
-    keys::validate_private(&private_key).ffi_return_code()
 }
 
 ///Returns private key length in bytes
@@ -152,10 +148,12 @@ pub extern "C" fn get_max_context_length() -> c_int{
     constants::CONTEXT_MAX_LENGTH as i32
 }
 
+#[doc(hidden)]
 pub trait ResultEx{
     fn ffi_return_code(self) -> c_int;
 }
 
+#[doc(hidden)]
 impl ResultEx for Result<(),failure::Error> {
     fn ffi_return_code(self) -> c_int{
         match self{
@@ -169,8 +167,7 @@ impl ResultEx for Result<(),failure::Error> {
             }
         }; 
     } 
-}  
-
+}
 
 #[cfg(test)]
 mod tests {
