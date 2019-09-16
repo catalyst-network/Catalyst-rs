@@ -42,10 +42,3 @@ pub const BULLETPROOF_BLINDING_LENGTH: usize = 32;
 //pub const BULLETPROOF_SIZE_EXPERIMENTAL: i32 = bulletproof_size_from_n(BULLETPROOF_N);
 
 
-pub const SIGNATURE_ERROR : i32 = 101;
-
-pub const CONTEXT_LENGTH_ERROR: i32 = 201;
-
-pub const BULLETPROOF_INVALID_BITSIZE_ERROR: i32 = 301;
-
-pub const UNKNOWN_ERROR : i32 = -1;

@@ -22,6 +22,10 @@ pub(crate) fn get_error_code(err : &failure::Error ) -> i32 {
         match e {
             bulletproofs::ProofError::InvalidBitsize => return BULLETPROOF_INVALID_BITSIZE_ERROR}
         }
-    */
-    else {return UNKNOWN_ERROR;}
+    
+    else {return UNKNOWN_ERROR;}*/
+    match err.as_fail() {
+       ed25519_dalek::SignatureError(something) => return SIGNATURE_ERROR
+    }
+
 }
