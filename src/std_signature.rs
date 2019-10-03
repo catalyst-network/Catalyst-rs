@@ -11,6 +11,7 @@ use super::{SecretKey, PublicKey, Signature, Keypair};
 type Result<T> = result::Result<T, failure::Error>;
 
 pub(crate) fn unwrap_and_sign(out_signature: &mut [u8;constants::SIGNATURE_LENGTH],
+                         out_public_key : &mut [u8;constants::PUBLIC_KEY_LENGTH],
                          private_key: &[u8;constants::PRIVATE_KEY_LENGTH], 
                          message: *const u8, 
                          message_length: usize, 
@@ -33,6 +34,7 @@ pub(crate) fn unwrap_and_sign(out_signature: &mut [u8;constants::SIGNATURE_LENGT
 
     let secret_key: SecretKey = SecretKey::from_bytes(private_key)?;
     let public_key: PublicKey = (&secret_key).into();
+    out_public_key.copy_from_slice(&public_key.to_bytes());
 
     let signature = sign(secret_key, public_key, message, Some(context))?;
 
@@ -90,11 +92,14 @@ mod tests {
         let initial_sig: [u8;constants::SIGNATURE_LENGTH] = [0;constants::SIGNATURE_LENGTH];
         let mut out_sig: [u8;constants::SIGNATURE_LENGTH] = Clone::clone(&initial_sig);
 
+        let mut out_public_key: [u8;constants::PRIVATE_KEY_LENGTH] = [0;constants::PUBLIC_KEY_LENGTH];
+
         let mut key: [u8;constants::PRIVATE_KEY_LENGTH] = [0;constants::PRIVATE_KEY_LENGTH];
         assert!(keys::generate_key(&mut key).is_ok());
+
         let message = String::from("You are a sacrifice article that I cut up rough now");
         let context = String::from("Context 1 2 3");
-        assert!(unwrap_and_sign(&mut out_sig, &key, message.as_ptr(), message.len(), context.as_ptr(), context.len()).is_ok());
+        assert!(unwrap_and_sign(&mut out_sig, &mut out_public_key, &key, message.as_ptr(), message.len(), context.as_ptr(), context.len()).is_ok());
 
         let secret_key: SecretKey = SecretKey::from_bytes(&key).expect("failed to create private key");
         let public_key: PublicKey = (&secret_key).into();
@@ -106,11 +111,13 @@ mod tests {
         let initial_sig: [u8;constants::SIGNATURE_LENGTH] = [0;constants::SIGNATURE_LENGTH];
         let mut out_sig: [u8;constants::SIGNATURE_LENGTH] = Clone::clone(&initial_sig);
 
+        let mut out_public_key: [u8;constants::PRIVATE_KEY_LENGTH] = [0;constants::PUBLIC_KEY_LENGTH];
+
         let mut key: [u8;constants::PRIVATE_KEY_LENGTH] = [0;constants::PRIVATE_KEY_LENGTH];
         assert!(keys::generate_key(&mut key).is_ok());
         let message = String::from("You are a sacrifice article that I cut up rough now");
         let context = String::from("");
-        assert!(unwrap_and_sign(&mut out_sig, &key, message.as_ptr(), message.len(), context.as_ptr(), context.len()).is_ok());
+        assert!(unwrap_and_sign(&mut out_sig, &mut out_public_key, &key, message.as_ptr(), message.len(), context.as_ptr(), context.len()).is_ok());
 
         let secret_key: SecretKey = SecretKey::from_bytes(&key).expect("failed to create private key");
         let public_key: PublicKey = (&secret_key).into();
