@@ -8,6 +8,7 @@ use crate::errors;
 use crate::keys;
 use crate::std_signature;
 use crate::constants;
+extern crate test;
 
 /// Calculate the number of bytes in the last error's error message **not**
 /// including any trailing `null` characters.
@@ -156,6 +157,7 @@ impl ResultEx for Result<(),failure::Error> {
 mod tests {
     use super::*;
     use crate::helpers::tests;
+    use test::Bencher;
     
     #[test]
     fn can_throw_context_length_error(){
@@ -179,5 +181,44 @@ mod tests {
         let err = bad_result.unwrap_err();
         let error_code = errors::get_error_code(&err);
         assert_eq!(error_code, constants::SIGNATURE_ERROR)
+    }
+
+    #[bench]
+    fn bench_sign(b: &mut Bencher){
+        let initial_sig: [u8;constants::SIGNATURE_LENGTH] = [0;constants::SIGNATURE_LENGTH];
+        let mut out_sig: [u8;constants::SIGNATURE_LENGTH] = Clone::clone(&initial_sig);
+
+        let mut key: [u8;constants::PRIVATE_KEY_LENGTH] = [0;constants::PRIVATE_KEY_LENGTH];
+        keys::generate_key(&mut key).unwrap();
+
+        let message = String::from("You are a sacrifice article that I cut up rough now");
+        let context = String::from("Context 1 2 3");
+        b.iter(|| {
+            let result = std_signature::unwrap_and_sign(&mut out_sig, &key, message.as_ptr(), message.len(), context.as_ptr(), context.len()); 
+            result.ffi_return_code()
+        });
+    }
+    
+    #[bench]
+    fn bench_verify(b: &mut Bencher){
+        let mut sig: [u8;constants::SIGNATURE_LENGTH] = [0;constants::SIGNATURE_LENGTH];
+
+        let mut private_key: [u8;constants::PRIVATE_KEY_LENGTH] = [0;constants::PRIVATE_KEY_LENGTH];
+        keys::generate_key(&mut private_key).unwrap();
+
+        let mut public_key: [u8;constants::PUBLIC_KEY_LENGTH] = [0;constants::PUBLIC_KEY_LENGTH];
+
+        let message = String::from("You are a sacrifice article that I cut up rough now");
+        let context = String::from("Context 1 2 3");
+        std_signature::unwrap_and_sign(&mut sig, &private_key, message.as_ptr(), message.len(), context.as_ptr(), context.len()).unwrap(); 
+        keys::publickey_from_private(&mut public_key, &private_key).unwrap();
+
+        let mut is_verified: [u8;1] = [0;1];
+
+        b.iter(|| {
+            std_signature::unwrap_and_verify(&sig, &public_key, message.as_ptr(), message.len(), context.as_ptr(), context.len())
+            .map(|b: bool| {is_verified[0] = b as u8; ()})
+            .ffi_return_code();
+        });
     }
 }

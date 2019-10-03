@@ -7,11 +7,10 @@ Install Rust via the Rustup tool:
 
 ```curl https://sh.rustup.rs -sSf | sh```
 
-If ```rustc --version``` fails, restart your console to ensure changes to ```PATH``` have taken effect.
+If ```rustc --version``` fails, restart your console to ensure changes to ```PATH``` have taken effect. 
 
-Clone this library, then run 
-
+To build and run the tests
 ```cargo test``` 
 
-to build and run the tests.
-
+For benchmarking
+```cargo bench``` 
