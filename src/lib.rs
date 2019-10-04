@@ -1,5 +1,4 @@
 #![recursion_limit = "1024"]
-#![feature(test)]
 
 extern crate ed25519_dalek;
 extern crate rand;
