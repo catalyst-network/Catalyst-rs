@@ -79,12 +79,13 @@ pub extern "C" fn std_verify(signature: & [u8;constants::SIGNATURE_LENGTH],
 /// Creates a signature from private key and message. Returns 0 if no error encountered, otherwise returns an error code.
 #[no_mangle]
 pub extern "C" fn std_sign(out_signature: &mut [u8;constants::SIGNATURE_LENGTH], 
+                           out_public_key : &mut [u8;constants::PUBLIC_KEY_LENGTH],
                            private_key: &[u8;constants::PRIVATE_KEY_LENGTH], 
                            message: *const u8, 
                            message_length: usize,
                            context: *const u8, 
                            context_length: usize) -> c_int {
-    let result = std_signature::unwrap_and_sign(out_signature, private_key, message, message_length, context, context_length);
+    let result = std_signature::unwrap_and_sign(out_signature, out_public_key, private_key, message, message_length, context, context_length);
     result.ffi_return_code()
 }
 
@@ -162,6 +163,8 @@ mod tests {
         
         let initial_sig: [u8;constants::SIGNATURE_LENGTH] = [0;constants::SIGNATURE_LENGTH];
         let mut out_sig: [u8;constants::SIGNATURE_LENGTH] = Clone::clone(&initial_sig);
+
+        let mut out_public_key: [u8;constants::PRIVATE_KEY_LENGTH] = [0;constants::PUBLIC_KEY_LENGTH];
         
         let context : Vec<u8> = (0..256).map(|_| { rand::random::<u8>() }).collect();
         println!("********* context length is: {}", context.len());
@@ -169,7 +172,7 @@ mod tests {
         let mut key: [u8;constants::PRIVATE_KEY_LENGTH] = [0;constants::PRIVATE_KEY_LENGTH];
         assert!(keys::generate_key(&mut key).is_ok());
         let message = String::from("You are a sacrifice article that I cut up rough now");
-        let error_code = std_sign(&mut out_sig, &key, message.as_ptr(), message.len(), context.as_ptr(), context.len());
+        let error_code = std_sign(&mut out_sig, &mut out_public_key, &key, message.as_ptr(), message.len(), context.as_ptr(), context.len());
         assert_eq!(error_code, constants::CONTEXT_LENGTH_ERROR);
     }
 
