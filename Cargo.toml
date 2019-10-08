@@ -22,3 +22,10 @@ crate-type = ["cdylib", "lib"]
 
 [profile.dev]
 opt-level = 3 
+
+[dev-dependencies]
+criterion = "0.3"
+
+[[bench]]
+name = "benchmarks"
+harness = false

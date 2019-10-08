@@ -179,5 +179,5 @@ mod tests {
         let err = bad_result.unwrap_err();
         let error_code = errors::get_error_code(&err);
         assert_eq!(error_code, constants::SIGNATURE_ERROR)
-    }
+    }      
 }
