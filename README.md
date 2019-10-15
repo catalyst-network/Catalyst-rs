@@ -1,7 +1,7 @@
 <div align="center">
   <img alt="ReDoc logo" src="https://raw.githubusercontent.com/catalyst-network/Community/master/media-pack/logo.png" width="400px" />
 
-  ### Catalyst Framework - Rust Cryptography FFI
+  ### Rust Cryptography FFI
 
 [![Discord](https://img.shields.io/discord/629667101774446593?color=blueviolet&label=discord)](https://discord.gg/anTP7xm)
 ![GitHub followers](https://img.shields.io/github/followers/catalyst-network?style=social)
