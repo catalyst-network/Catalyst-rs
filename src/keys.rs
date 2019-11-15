@@ -1,58 +1,75 @@
 //! ed25519 keys
 
-use rand::thread_rng;
-use ed25519_dalek::{PublicKey,SecretKey};
 use crate::constants;
-use std::result;
+pub use catalyst_protocol_sdk_rust::prelude::*;
+pub use catalyst_protocol_sdk_rust::Cryptography::ErrorCode;
+use ed25519_dalek::{PublicKey, SecretKey};
+use rand::thread_rng;
 
-pub type Result<T> = result::Result<T, failure::Error>;
-
-pub fn publickey_from_private(out_publickey: &mut [u8;constants::PUBLIC_KEY_LENGTH], private_key: &[u8;constants::PRIVATE_KEY_LENGTH]) -> Result<()> {
-    let secret_key: SecretKey = SecretKey::from_bytes(private_key)?;
+pub fn publickey_from_private(
+    out_publickey: &mut [u8; constants::PUBLIC_KEY_LENGTH],
+    private_key: &[u8; constants::PRIVATE_KEY_LENGTH],
+) -> i32 {
+    let secret_key: SecretKey = match SecretKey::from_bytes(private_key) {
+        Ok(secret_key) => secret_key,
+        Err(_) => return ErrorCode::INVALID_PRIVATE_KEY.value(),
+    };
     let public_key: PublicKey = (&secret_key).into();
     out_publickey.copy_from_slice(&public_key.to_bytes());
-    Ok(())
+    ErrorCode::NO_ERROR.value()
 }
 
-pub fn generate_key(out_key: &mut [u8;constants::PRIVATE_KEY_LENGTH]) -> Result<()> {
+pub fn generate_key(out_key: &mut [u8; constants::PRIVATE_KEY_LENGTH]) -> i32 {
     let mut csprng = thread_rng();
     let secret_key: SecretKey = SecretKey::generate(&mut csprng);
     out_key.copy_from_slice(&secret_key.to_bytes());
-    Ok(())
+    ErrorCode::NO_ERROR.value()
 }
 
-pub fn validate_public(public_key: &[u8;constants::PUBLIC_KEY_LENGTH]) -> Result<()>{
-    PublicKey::from_bytes(public_key)?;
-    Ok(())
+pub fn validate_public(public_key: &[u8; constants::PUBLIC_KEY_LENGTH]) -> i32 {
+    match PublicKey::from_bytes(public_key) {
+        Ok(_) => ErrorCode::NO_ERROR.value(),
+        Err(_) => ErrorCode::INVALID_PUBLIC_KEY.value(),
+    }
 }
 
-pub fn validate_private(private_key: &[u8; constants::PRIVATE_KEY_LENGTH]) -> Result<()>{
-    SecretKey::from_bytes(private_key)?;
-    Ok(())
+pub fn validate_private(private_key: &[u8; constants::PRIVATE_KEY_LENGTH]) -> i32 {
+    match SecretKey::from_bytes(private_key) {
+        Ok(_) => ErrorCode::NO_ERROR.value(),
+        Err(_) => ErrorCode::INVALID_PRIVATE_KEY.value(),
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
-    fn can_generate_private_key(){
-        let initial_key: [u8;constants::PRIVATE_KEY_LENGTH] = [0;constants::PRIVATE_KEY_LENGTH];
-        let mut out_key: [u8;constants::PRIVATE_KEY_LENGTH] = Clone::clone(&initial_key);
-        assert_eq!(out_key,initial_key, "arrays should be the same");
-        assert!(generate_key(&mut out_key).is_ok());
-        assert_ne!(out_key,initial_key, "key bytes should have been changed by generate_key function");
+    fn can_generate_private_key() {
+        let initial_key: [u8; constants::PRIVATE_KEY_LENGTH] = [0; constants::PRIVATE_KEY_LENGTH];
+        let mut private_key: [u8; constants::PRIVATE_KEY_LENGTH] = Clone::clone(&initial_key);
+        assert_eq!(private_key, initial_key, "arrays should be the same");
+        assert_eq!(generate_key(&mut private_key), ErrorCode::NO_ERROR.value());
+        assert_ne!(
+            private_key, initial_key,
+            "key bytes should have been changed by generate_key function"
+        );
     }
 
     #[test]
-    fn can_get_public_key_from_private_key(){
-        let mut privatekey: [u8;constants::PRIVATE_KEY_LENGTH] = [0;constants::PRIVATE_KEY_LENGTH];
-        assert!(generate_key(&mut privatekey).is_ok());
-        let mut out_publickey: [u8;constants::PUBLIC_KEY_LENGTH] = [0;constants::PUBLIC_KEY_LENGTH];
-        assert!(publickey_from_private(&mut out_publickey, &privatekey).is_ok());
-        let secret_key: SecretKey = SecretKey::from_bytes(&privatekey).expect("failed to create private key");
-        let public_key: PublicKey = (&secret_key).into();
+    fn can_get_public_key_from_private_key() {
+        let mut private_key: [u8; constants::PRIVATE_KEY_LENGTH] =
+            [0; constants::PRIVATE_KEY_LENGTH];
+        assert_eq!(generate_key(&mut private_key), ErrorCode::NO_ERROR.value());
+        let mut out_publickey: [u8; constants::PUBLIC_KEY_LENGTH] =
+            [0; constants::PUBLIC_KEY_LENGTH];
+        assert_eq!(
+            publickey_from_private(&mut out_publickey, &private_key),
+            ErrorCode::NO_ERROR.value()
+        );
+        let private_key: SecretKey =
+            SecretKey::from_bytes(&private_key).expect("failed to create private key");
+        let public_key: PublicKey = (&private_key).into();
         assert_eq!(out_publickey, public_key.to_bytes());
     }
 }
-

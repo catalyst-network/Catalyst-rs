@@ -1,16 +1,13 @@
 #![recursion_limit = "1024"]
 
+extern crate catalyst_protocol_sdk_rust;
 extern crate ed25519_dalek;
-extern crate rand;
 extern crate libc;
-#[macro_use] extern crate failure;
-#[macro_use] extern crate log;
+extern crate rand;
 
-pub use ed25519_dalek::{SecretKey, PublicKey, Signature, Keypair};
+pub use ed25519_dalek::{Keypair, PublicKey, SecretKey, Signature};
 
-pub mod std_signature;
 pub mod constants;
 pub mod ffi;
 pub mod keys;
-mod errors;
-mod helpers;
+pub mod std_signature;
