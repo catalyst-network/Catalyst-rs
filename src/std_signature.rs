@@ -1,24 +1,22 @@
 //! Ed25519ph signatures and verification.
 
-use std::slice;
-use std::result;
-use failure;
+use super::{Keypair, PublicKey, SecretKey, Signature};
 use crate::constants;
-use crate::errors;
-use ed25519_dalek::{Sha512, Digest};
-use super::{SecretKey, PublicKey, Signature, Keypair};
+pub use catalyst_protocol_sdk_rust::prelude::*;
+pub use catalyst_protocol_sdk_rust::Cryptography::ErrorCode;
+use ed25519_dalek::{Digest, Sha512};
+use std::slice;
 
-type Result<T> = result::Result<T, failure::Error>;
-
-pub(crate) fn unwrap_and_sign(out_signature: &mut [u8;constants::SIGNATURE_LENGTH],
-                         out_public_key : &mut [u8;constants::PUBLIC_KEY_LENGTH],
-                         private_key: &[u8;constants::PRIVATE_KEY_LENGTH], 
-                         message: *const u8, 
-                         message_length: usize, 
-                         context: *const u8, 
-                         context_length: usize) 
-                         -> Result<()>{
-   let message = unsafe {
+pub(crate) fn unwrap_and_sign(
+    out_signature: &mut [u8; constants::SIGNATURE_LENGTH],
+    out_public_key: &mut [u8; constants::PUBLIC_KEY_LENGTH],
+    private_key: &[u8; constants::PRIVATE_KEY_LENGTH],
+    message: *const u8,
+    message_length: usize,
+    context: *const u8,
+    context_length: usize,
+) -> i32 {
+    let message = unsafe {
         assert!(!message.is_null());
         slice::from_raw_parts(message, message_length)
     };
@@ -29,35 +27,43 @@ pub(crate) fn unwrap_and_sign(out_signature: &mut [u8;constants::SIGNATURE_LENGT
     };
 
     if context.len() > constants::CONTEXT_MAX_LENGTH {
-        Err(errors::ContextLengthError)?;
+        return ErrorCode::INVALID_CONTEXT_LENGTH.value();
     }
 
-    let secret_key: SecretKey = SecretKey::from_bytes(private_key)?;
-    let public_key: PublicKey = (&secret_key).into();
+    let private_key = match SecretKey::from_bytes(private_key) {
+        Ok(private_key) => private_key,
+        Err(_) => return ErrorCode::INVALID_PRIVATE_KEY.value(),
+    };
+    let public_key: PublicKey = (&private_key).into();
     out_public_key.copy_from_slice(&public_key.to_bytes());
 
-    let signature = sign(secret_key, public_key, message, Some(context))?;
+    let signature = sign(private_key, public_key, message, Some(context));
 
     out_signature.copy_from_slice(&signature.to_bytes());
-    Ok(())
+    ErrorCode::NO_ERROR.value()
 }
 /// Creates an ed25519ph signature from private key, context and message.
-pub fn sign(secret: SecretKey, public: PublicKey, message: &[u8], context: Option<&'static [u8]>)
--> Result<Signature> {
+pub fn sign(
+    secret: SecretKey,
+    public: PublicKey,
+    message: &[u8],
+    context: Option<&'static [u8]>,
+) -> Signature {
     let keypair: Keypair = Keypair { secret, public };
     let mut prehashed: Sha512 = Sha512::new();
     prehashed.input(message);
-    Ok(keypair.sign_prehashed(prehashed, context))
+    keypair.sign_prehashed(prehashed, context)
 }
 
-pub(crate) fn unwrap_and_verify(signature: & [u8;constants::SIGNATURE_LENGTH],
-                           publickey: &[u8;constants::PUBLIC_KEY_LENGTH], 
-                           message: *const u8, 
-                           message_length: usize,
-                           context: *const u8, 
-                           context_length: usize) 
-                           -> Result<bool>{
-   let message = unsafe {
+pub(crate) fn unwrap_and_verify(
+    signature: &[u8; constants::SIGNATURE_LENGTH],
+    publickey: &[u8; constants::PUBLIC_KEY_LENGTH],
+    message: *const u8,
+    message_length: usize,
+    context: *const u8,
+    context_length: usize,
+) -> i32 {
+    let message = unsafe {
         assert!(!message.is_null());
         slice::from_raw_parts(message, message_length)
     };
@@ -67,19 +73,31 @@ pub(crate) fn unwrap_and_verify(signature: & [u8;constants::SIGNATURE_LENGTH],
         slice::from_raw_parts(context, context_length)
     };
 
-    let public_key: PublicKey = PublicKey::from_bytes(publickey)?;
-    let signature: Signature = Signature::from_bytes(signature)?;
+    let public_key = match PublicKey::from_bytes(publickey) {
+        Ok(public_key) => public_key,
+        Err(_) => return ErrorCode::INVALID_PUBLIC_KEY.value(),
+    };
+    let signature = match Signature::from_bytes(signature) {
+        Ok(signature) => signature,
+        Err(_) => return ErrorCode::INVALID_SIGNATURE.value(),
+    };
 
     verify(signature, public_key, message, Some(context))
-    
 }
 
 /// Verifies that an ed25519ph signature corresponds to the provided public key, message, and context.
-pub fn verify(signature: Signature, public: PublicKey, message: &[u8], context: Option<&'static [u8]>)
--> Result<bool> {
+pub fn verify(
+    signature: Signature,
+    public: PublicKey,
+    message: &[u8],
+    context: Option<&'static [u8]>,
+) -> i32 {
     let mut prehashed: Sha512 = Sha512::new();
     prehashed.input(message);
-    Ok(public.verify_prehashed(prehashed, context, &signature).is_ok())
+    match public.verify_prehashed(prehashed, context, &signature) {
+        Ok(_) => ErrorCode::NO_ERROR.value(),
+        Err(_) => ErrorCode::SIGNATURE_VERIFICATION_FAILURE.value(),
+    }
 }
 
 #[cfg(test)]
@@ -88,39 +106,82 @@ mod tests {
     use crate::keys;
 
     #[test]
-    fn can_sign_message_and_verify_signature(){
-        let initial_sig: [u8;constants::SIGNATURE_LENGTH] = [0;constants::SIGNATURE_LENGTH];
-        let mut out_sig: [u8;constants::SIGNATURE_LENGTH] = Clone::clone(&initial_sig);
+    fn can_sign_message_and_verify_signature() {
+        let initial_sig: [u8; constants::SIGNATURE_LENGTH] = [0; constants::SIGNATURE_LENGTH];
+        let mut out_sig: [u8; constants::SIGNATURE_LENGTH] = Clone::clone(&initial_sig);
 
-        let mut out_public_key: [u8;constants::PRIVATE_KEY_LENGTH] = [0;constants::PUBLIC_KEY_LENGTH];
+        let mut out_public_key: [u8; constants::PRIVATE_KEY_LENGTH] =
+            [0; constants::PUBLIC_KEY_LENGTH];
 
-        let mut key: [u8;constants::PRIVATE_KEY_LENGTH] = [0;constants::PRIVATE_KEY_LENGTH];
-        assert!(keys::generate_key(&mut key).is_ok());
+        let mut key: [u8; constants::PRIVATE_KEY_LENGTH] = [0; constants::PRIVATE_KEY_LENGTH];
+        keys::generate_key(&mut key);
 
         let message = String::from("You are a sacrifice article that I cut up rough now");
         let context = String::from("Context 1 2 3");
-        assert!(unwrap_and_sign(&mut out_sig, &mut out_public_key, &key, message.as_ptr(), message.len(), context.as_ptr(), context.len()).is_ok());
+        unwrap_and_sign(
+            &mut out_sig,
+            &mut out_public_key,
+            &key,
+            message.as_ptr(),
+            message.len(),
+            context.as_ptr(),
+            context.len(),
+        );
 
-        let secret_key: SecretKey = SecretKey::from_bytes(&key).expect("failed to create private key");
+        let secret_key: SecretKey =
+            SecretKey::from_bytes(&key).expect("failed to create private key");
         let public_key: PublicKey = (&secret_key).into();
-        assert_eq!(unwrap_and_verify(&out_sig, &PublicKey::to_bytes(&public_key),message.as_ptr(), message.len(), context.as_ptr(), context.len()).unwrap(), true);
+        assert_eq!(
+            unwrap_and_verify(
+                &out_sig,
+                &PublicKey::to_bytes(&public_key),
+                message.as_ptr(),
+                message.len(),
+                context.as_ptr(),
+                context.len()
+            ),
+            ErrorCode::NO_ERROR.value()
+        );
     }
 
     #[test]
-    fn can_sign_message_and_verify_signature_with_empty_context(){
-        let initial_sig: [u8;constants::SIGNATURE_LENGTH] = [0;constants::SIGNATURE_LENGTH];
-        let mut out_sig: [u8;constants::SIGNATURE_LENGTH] = Clone::clone(&initial_sig);
+    fn can_sign_message_and_verify_signature_with_empty_context() {
+        let initial_sig: [u8; constants::SIGNATURE_LENGTH] = [0; constants::SIGNATURE_LENGTH];
+        let mut out_sig: [u8; constants::SIGNATURE_LENGTH] = Clone::clone(&initial_sig);
 
-        let mut out_public_key: [u8;constants::PRIVATE_KEY_LENGTH] = [0;constants::PUBLIC_KEY_LENGTH];
+        let mut out_public_key: [u8; constants::PRIVATE_KEY_LENGTH] =
+            [0; constants::PUBLIC_KEY_LENGTH];
 
-        let mut key: [u8;constants::PRIVATE_KEY_LENGTH] = [0;constants::PRIVATE_KEY_LENGTH];
-        assert!(keys::generate_key(&mut key).is_ok());
+        let mut key: [u8; constants::PRIVATE_KEY_LENGTH] = [0; constants::PRIVATE_KEY_LENGTH];
+        assert_eq!(keys::generate_key(&mut key), ErrorCode::NO_ERROR.value());
         let message = String::from("You are a sacrifice article that I cut up rough now");
         let context = String::from("");
-        assert!(unwrap_and_sign(&mut out_sig, &mut out_public_key, &key, message.as_ptr(), message.len(), context.as_ptr(), context.len()).is_ok());
+        assert_eq!(
+            unwrap_and_sign(
+                &mut out_sig,
+                &mut out_public_key,
+                &key,
+                message.as_ptr(),
+                message.len(),
+                context.as_ptr(),
+                context.len()
+            ),
+            ErrorCode::NO_ERROR.value()
+        );
 
-        let secret_key: SecretKey = SecretKey::from_bytes(&key).expect("failed to create private key");
+        let secret_key: SecretKey =
+            SecretKey::from_bytes(&key).expect("failed to create private key");
         let public_key: PublicKey = (&secret_key).into();
-        assert_eq!(unwrap_and_verify(&out_sig, &PublicKey::to_bytes(&public_key),message.as_ptr(), message.len(), context.as_ptr(), context.len()).unwrap(), true);
+        assert_eq!(
+            unwrap_and_verify(
+                &out_sig,
+                &PublicKey::to_bytes(&public_key),
+                message.as_ptr(),
+                message.len(),
+                context.as_ptr(),
+                context.len()
+            ),
+            ErrorCode::NO_ERROR.value()
+        );
     }
 }

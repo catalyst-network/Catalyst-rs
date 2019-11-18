@@ -6,14 +6,9 @@ edition = "2018"
 
 [dependencies]
 ed25519-dalek = { version = "1.0.0-pre.1", features = ["serde"] }
-curve25519-dalek="^1"
 rand="0.6.0"
-sha2="0.8"
-hex = "^0.3"
-bincode = "^0.9"
 libc = "^0.2"
-log = "0.4"
-failure = "0.1.5"
+catalyst-protocol-sdk-rust = "0.1.2"
 
 [lib]
 name = "catalystffi"
