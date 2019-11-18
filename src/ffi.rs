@@ -1,5 +1,5 @@
 //! The foreign function interface which exposes this library to non-Rust
-//! languages.
+//! languages. Error codes returned are as defined in protocol protobuffs https://github.com/catalyst-network/protocol-protobuffs/blob/develop/src/Cryptography.proto
 
 use crate::constants;
 use crate::keys;
@@ -26,7 +26,7 @@ pub extern "C" fn std_verify(
     )
 }
 
-/// Creates a signature from private key and message. Returns 0 if no error encountered, otherwise returns an error code.
+/// Creates a signature from private key and message. 
 #[no_mangle]
 pub extern "C" fn std_sign(
     out_signature: &mut [u8; constants::SIGNATURE_LENGTH],
@@ -48,7 +48,7 @@ pub extern "C" fn std_sign(
     )
 }
 
-/// Returns correponding public key, given a private key. Returns 0 if sucessful, otherwise returns an error code.
+/// Calculates corresponding public key, given a private key. 
 #[no_mangle]
 pub extern "C" fn publickey_from_private(
     out_publickey: &mut [u8; constants::PUBLIC_KEY_LENGTH],
@@ -57,13 +57,13 @@ pub extern "C" fn publickey_from_private(
     keys::publickey_from_private(out_publickey, private_key)
 }
 
-/// Randomly generated private key. Returns error code as defined in protocol protobuffs.
+/// Randomly generated private key.
 #[no_mangle]
 pub extern "C" fn generate_key(out_key: &mut [u8; constants::PRIVATE_KEY_LENGTH]) -> c_int {
     keys::generate_key(out_key)
 }
 
-/// Checks that the bytes provided represent a valid public key. Returns 0 if successful, otherwise returns error code.
+/// Checks that the bytes provided represent a valid public key.
 #[no_mangle]
 pub extern "C" fn validate_public_key(public_key: &[u8; constants::PUBLIC_KEY_LENGTH]) -> c_int {
     keys::validate_public(&public_key)
