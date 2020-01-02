@@ -15,11 +15,12 @@ use curve25519_dalek::traits::VartimeMultiscalarMul;
 
 pub use curve25519_dalek::digest::Digest;
 
-use rand::Rng;
+use crate::rand::Rng;
 use rand::thread_rng;
 
 use ed25519_dalek::Sha512;
 use catalyst_protocol_sdk_rust::Cryptography::ErrorCode;
+use crate::extensions::SignatureExposed;
 
 pub fn verify_batch(
     messages: &[&[u8]],
@@ -38,11 +39,16 @@ pub fn verify_batch(
     let ctx: &[u8] = context.unwrap_or(b"");
         debug_assert!(ctx.len() <= 255, "The context must not be longer than 255 octets.");
 
-    let prehashed_messages = (0..messages.len()).map(|i| {
+    let prehashed_messages : Vec<Sha512> = (0..messages.len()).map(|i| {
         let mut prehashed: Sha512 = Sha512::new();
         prehashed.input(&messages[i]);
-        prehashed.result().as_slice()
+        prehashed
     }).collect();
+
+    let sigs: Vec<SignatureExposed> = signatures
+        .iter()
+        .map(|x| x.into())
+        .collect();
 
     // Compute H(dom || R || A || H(M)) for each (signature, public_key, message) triplet
     let hrams: Vec<Scalar> = (0..signatures.len()).map(|i| {
@@ -51,21 +57,21 @@ pub fn verify_batch(
         h.input(&[1]); // Ed25519ph
         h.input(&[ctx.len() as u8]);
         h.input(ctx);
-        h.input(signatures[i].R.as_bytes());
+        h.input(sigs[i].R.as_bytes());
         h.input(public_keys[i].as_bytes());
-        h.input(&prehashed_messages[i]);
+        h.input(&prehashed_messages[i].result().as_slice());
         Scalar::from_hash(h)
     }).collect();
 
     // Select a random 128-bit scalar for each signature.
     let zs: Vec<Scalar> = signatures
         .iter()
-        .map(|_| Scalar::from(thread_rng.gen::<u128>()))
+        .map(|_| Scalar::from(thread_rng().gen::<u128>()))
         .collect();
 
 
     // Compute the basepoint coefficient, ∑ s[i]z[i] (mod l)
-    let B_coefficient: Scalar = signatures
+    let B_coefficient: Scalar = sigs
         .iter()
         .map(|sig| sig.s)
         .zip(zs.iter())
@@ -75,7 +81,7 @@ pub fn verify_batch(
     // Multiply each H(dom || R || A || H(M)) by the random value
     let zhrams = hrams.iter().zip(zs.iter()).map(|(hram, z)| hram * z);
 
-    let Rs = signatures.iter().map(|sig| sig.R.decompress());
+    let Rs = sigs.iter().map(|sig| sig.R.decompress());
     let As = public_keys.iter().map(|pk| Some(pk.1));
     let B = once(Some(constants::ED25519_BASEPOINT_POINT));
 

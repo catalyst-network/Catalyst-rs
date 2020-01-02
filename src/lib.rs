@@ -13,3 +13,4 @@ pub mod ffi;
 pub mod keys;
 pub mod std_signature;
 mod batch;
+mod extensions;
