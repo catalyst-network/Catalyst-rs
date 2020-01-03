@@ -20,8 +20,10 @@ use rand::thread_rng;
 
 use ed25519_dalek::Sha512;
 use catalyst_protocol_sdk_rust::Cryptography::ErrorCode;
-use crate::extensions::SignatureExposed;
+use crate::extensions::{SignatureExposed, PublicKeyExt};
 
+#[allow(dead_code)]
+#[allow(non_snake_case)]
 pub fn verify_batch(
     messages: &[&[u8]],
     signatures: &[Signature],
@@ -39,27 +41,23 @@ pub fn verify_batch(
     let ctx: &[u8] = context.unwrap_or(b"");
         debug_assert!(ctx.len() <= 255, "The context must not be longer than 255 octets.");
 
-    let prehashed_messages : Vec<Sha512> = (0..messages.len()).map(|i| {
-        let mut prehashed: Sha512 = Sha512::new();
-        prehashed.input(&messages[i]);
-        prehashed
-    }).collect();
-
     let sigs: Vec<SignatureExposed> = signatures
         .iter()
-        .map(|x| x.into())
+        .map(|x| (*x).into())
         .collect();
 
+    let mut common_hash : Sha512 = Sha512::default();
+    common_hash.input(b"SigEd25519 no Ed25519 collisions");
+    common_hash.input(&[1]); // Ed25519ph
+    common_hash.input(&[ctx.len() as u8]);
+    common_hash.input(ctx);
+
     // Compute H(dom || R || A || H(M)) for each (signature, public_key, message) triplet
-    let hrams: Vec<Scalar> = (0..signatures.len()).map(|i| {
-        let mut h : Sha512 = Sha512::default();
-        h.input(b"SigEd25519 no Ed25519 collisions");
-        h.input(&[1]); // Ed25519ph
-        h.input(&[ctx.len() as u8]);
-        h.input(ctx);
+    let hrams: Vec<Scalar> = (0..messages.len()).map(|i| {
+        let mut h : Sha512 = common_hash.clone();
         h.input(sigs[i].R.as_bytes());
         h.input(public_keys[i].as_bytes());
-        h.input(&prehashed_messages[i].result().as_slice());
+        h.input(Sha512::digest(&messages[i]).as_slice());
         Scalar::from_hash(h)
     }).collect();
 
@@ -68,7 +66,6 @@ pub fn verify_batch(
         .iter()
         .map(|_| Scalar::from(thread_rng().gen::<u128>()))
         .collect();
-
 
     // Compute the basepoint coefficient, ∑ s[i]z[i] (mod l)
     let B_coefficient: Scalar = sigs
@@ -82,7 +79,7 @@ pub fn verify_batch(
     let zhrams = hrams.iter().zip(zs.iter()).map(|(hram, z)| hram * z);
 
     let Rs = sigs.iter().map(|sig| sig.R.decompress());
-    let As = public_keys.iter().map(|pk| Some(pk.1));
+    let As = public_keys.iter().map(|pk| Some(pk.to_decompressed_point()));
     let B = once(Some(constants::ED25519_BASEPOINT_POINT));
 
     // Compute (-∑ z[i]s[i] (mod l)) B + ∑ z[i]R[i] + ∑ (z[i]H(dom || R || A || H(M))[i] (mod l)) A[i] = 0
@@ -100,10 +97,123 @@ pub fn verify_batch(
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+    use rand::thread_rng;
+    use rand::rngs::ThreadRng;
 
     #[test]
-    fn can_run_test() {
-        let b = true;
+    fn batch_verify_validates_multiple_correct_signatures() {
+        let messages: [&[u8]; 5] = [
+            b"'Twas brillig, and the slithy toves",
+            b"Did gyre and gimble in the wabe:",
+            b"All mimsy were the borogoves,",
+            b"And the mome raths outgrabe.",
+            b"'Beware the Jabberwock, my son!", ];
+        let mut csprng: ThreadRng = thread_rng();
+        let mut keypairs: Vec<Keypair> = Vec::new();
+        let mut signatures: Vec<Signature> = Vec::new();
+        let context = b"any old context";
+
+        for i in 0..messages.len() {
+            let keypair: Keypair = Keypair::generate(&mut csprng);
+            let mut h = Sha512::default();
+            h.input(&messages[i]);
+            signatures.push(keypair.sign_prehashed(h, Some(context)));
+            keypairs.push(keypair);
+        }
+
+        let public_keys: Vec<PublicKey> = keypairs.iter().map(|key| key.public).collect();       
+
+        let result = verify_batch(&messages, &signatures, &public_keys, Some(context));
+
+        assert_eq!(result, ErrorCode::NO_ERROR.value());
     }
 
+    #[test]
+    fn batch_verify_fails_on_single_incorrect_message() {
+        let mut messages: [&[u8]; 5] = [
+            b"'Twas brillig, and the slithy toves",
+            b"Did gyre and gimble in the wabe:",
+            b"All mimsy were the borogoves,",
+            b"And the mome raths outgrabe.",
+            b"'Beware the Jabberwock, my son!", ];
+        let mut csprng: ThreadRng = thread_rng();
+        let mut keypairs: Vec<Keypair> = Vec::new();
+        let mut signatures: Vec<Signature> = Vec::new();
+        let context = b"any old context";
+
+        for i in 0..messages.len() {
+            let keypair: Keypair = Keypair::generate(&mut csprng);
+            let mut h = Sha512::default();
+            h.input(&messages[i]);
+            signatures.push(keypair.sign_prehashed(h, Some(context)));
+            keypairs.push(keypair);
+        }
+        //alter a message before batch verification
+        messages[4] = b"The jaws that bite, the claws that catch!";
+
+        let public_keys: Vec<PublicKey> = keypairs.iter().map(|key| key.public).collect();
+        
+        let result = verify_batch(&messages, &signatures, &public_keys, Some(context));
+
+        assert_eq!(result, ErrorCode::SIGNATURE_VERIFICATION_FAILURE.value());
+    }
+
+    #[test]
+    fn batch_verify_fails_on_single_incorrect_signature() {
+        let messages: [&[u8]; 5] = [
+            b"'Twas brillig, and the slithy toves",
+            b"Did gyre and gimble in the wabe:",
+            b"All mimsy were the borogoves,",
+            b"And the mome raths outgrabe.",
+            b"'Beware the Jabberwock, my son!", ];
+        let mut csprng: ThreadRng = thread_rng();
+        let mut keypairs: Vec<Keypair> = Vec::new();
+        let mut signatures: Vec<Signature> = Vec::new();
+        let context = b"any old context";
+
+        for i in 0..messages.len() {
+            let keypair: Keypair = Keypair::generate(&mut csprng);
+            let mut h = Sha512::default();
+            h.input(&messages[i]);
+            signatures.push(keypair.sign_prehashed(h, Some(context)));
+            keypairs.push(keypair);
+        }
+        //alter a signature before batch verification
+        signatures[3] = signatures[4];
+
+        let public_keys: Vec<PublicKey> = keypairs.iter().map(|key| key.public).collect();
+        
+        let result = verify_batch(&messages, &signatures, &public_keys, Some(context));
+
+        assert_eq!(result, ErrorCode::SIGNATURE_VERIFICATION_FAILURE.value());
+    }
+
+    #[test]
+    fn batch_verify_fails_on_incorrect_context() {
+        let messages: [&[u8]; 5] = [
+            b"'Twas brillig, and the slithy toves",
+            b"Did gyre and gimble in the wabe:",
+            b"All mimsy were the borogoves,",
+            b"And the mome raths outgrabe.",
+            b"'Beware the Jabberwock, my son!", ];
+        let mut csprng: ThreadRng = thread_rng();
+        let mut keypairs: Vec<Keypair> = Vec::new();
+        let mut signatures: Vec<Signature> = Vec::new();
+        let context = b"any old context";
+
+        for i in 0..messages.len() {
+            let keypair: Keypair = Keypair::generate(&mut csprng);
+            let mut h = Sha512::default();
+            h.input(&messages[i]);
+            signatures.push(keypair.sign_prehashed(h, Some(context)));
+            keypairs.push(keypair);
+        }
+
+        let public_keys: Vec<PublicKey> = keypairs.iter().map(|key| key.public).collect();
+        
+        let result = verify_batch(&messages, &signatures, &public_keys, Some(b"a different context"));
+
+        assert_eq!(result, ErrorCode::SIGNATURE_VERIFICATION_FAILURE.value());
+    }
 }
