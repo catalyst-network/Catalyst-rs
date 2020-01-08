@@ -6,7 +6,7 @@ extern crate libc;
 extern crate rand;
 
 pub use ed25519_dalek::{Keypair, PublicKey, SecretKey, Signature};
-pub use catalyst_protocol_sdk_rust::prelude::*;
+pub(crate) use catalyst_protocol_sdk_rust::prelude::*;
 
 pub mod constants;
 pub mod ffi;

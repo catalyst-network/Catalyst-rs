@@ -19,7 +19,7 @@ use crate::rand::Rng;
 use rand::thread_rng;
 
 use ed25519_dalek::Sha512;
-use catalyst_protocol_sdk_rust::Cryptography::ErrorCode;
+use catalyst_protocol_sdk_rust::Cryptography::{ErrorCode, SignatureBatch};
 use crate::extensions::{SignatureExposed, PublicKeyExt};
 
 #[allow(dead_code)]
@@ -86,13 +86,20 @@ pub fn verify_batch(
     let id = EdwardsPoint::optional_multiscalar_mul(
         once(-B_coefficient).chain(zs.iter().cloned()).chain(zhrams),
         B.chain(Rs).chain(As),
-    ).ok_or_else(|| return ErrorCode::SIGNATURE_VERIFICATION_FAILURE.value()).unwrap();
+    ).ok_or_else(|| return ErrorCode::BATCH_SIGNATURE_VERIFICATION_FAILURE.value()).unwrap();
 
     if id.is_identity() {
         ErrorCode::NO_ERROR.value()
     } else {
-        ErrorCode::SIGNATURE_VERIFICATION_FAILURE.value()
+        ErrorCode::BATCH_SIGNATURE_VERIFICATION_FAILURE.value()
     }
+}
+
+pub(crate) fn unwrap_and_verify_batch(batch_sigs : &mut SignatureBatch) {
+    let sigs = batch_sigs.take_signatures().iter().map(|x| Signature::from_bytes(&x).unwrap().into()).collect::<Vec<SignatureExposed>>();
+    let pks = batch_sigs.take_public_keys().iter().map(|x| PublicKey::from_bytes(&x).unwrap()).collect::<Vec<PublicKey>>();
+
+    verify_batch(batch_sigs.messages.as_slice(), sigs.as_slice(), pks.as_slice, Some(b"context") );
 }
 
 #[cfg(test)]

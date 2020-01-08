@@ -1,10 +1,9 @@
 //! The foreign function interface which exposes this library to non-Rust
 //! languages. Error codes returned are as defined in protocol protobuffs https://github.com/catalyst-network/protocol-protobuffs/blob/develop/src/Cryptography.proto
 
-use crate::constants;
-use crate::keys;
-use crate::std_signature;
+use super::*;
 use libc::c_int;
+use catalyst_protocol_sdk_rust::Cryptography::SignatureBatch;
 
 /// Verifies that an ed25519 signature corresponds to the provided public key, message, and context. Returns 0 if no error encountered, otherwise returns an error code. Sets value of is_verified based of verification outcome.
 #[no_mangle]
@@ -46,6 +45,12 @@ pub extern "C" fn std_sign(
         context,
         context_length,
     )
+}
+
+#[no_mangle]
+pub extern "C" fn pass_batch(bytes: &[u8]){
+    let mut batch = SignatureBatch::new();
+    batch.merge_from_bytes(bytes);
 }
 
 /// Calculates corresponding public key, given a private key. 
