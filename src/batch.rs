@@ -15,6 +15,8 @@ use curve25519_dalek::traits::VartimeMultiscalarMul;
 
 pub use curve25519_dalek::digest::Digest;
 
+use std::slice;
+
 use crate::rand::Rng;
 use rand::thread_rng;
 
@@ -24,27 +26,22 @@ use crate::extensions::{SignatureExposed, PublicKeyExt};
 
 #[allow(dead_code)]
 #[allow(non_snake_case)]
-pub fn verify_batch(
-    messages: &[&[u8]],
-    signatures: &[Signature],
+pub(crate) fn verify_batch(
+    messages: &[Vec<u8>],
+    sigs: &[SignatureExposed],
     public_keys: &[PublicKey],
     context: Option<&'static [u8]>,
 ) -> i32
 {
     // Return an error code if any of the vectors are not the same size as the others.
-    if signatures.len() != messages.len() ||
-        signatures.len() != public_keys.len() ||
+    if sigs.len() != messages.len() ||
+        sigs.len() != public_keys.len() ||
         public_keys.len() != messages.len() {
-        return ErrorCode::SIGNATURE_VERIFICATION_FAILURE.value();
+        return ErrorCode::ARRAYS_NOT_EQUAL_LENGTH.value();
     }
 
     let ctx: &[u8] = context.unwrap_or(b"");
         debug_assert!(ctx.len() <= 255, "The context must not be longer than 255 octets.");
-
-    let sigs: Vec<SignatureExposed> = signatures
-        .iter()
-        .map(|x| (*x).into())
-        .collect();
 
     let mut common_hash : Sha512 = Sha512::default();
     common_hash.input(b"SigEd25519 no Ed25519 collisions");
@@ -62,7 +59,7 @@ pub fn verify_batch(
     }).collect();
 
     // Select a random 128-bit scalar for each signature.
-    let zs: Vec<Scalar> = signatures
+    let zs: Vec<Scalar> = sigs
         .iter()
         .map(|_| Scalar::from(thread_rng().gen::<u128>()))
         .collect();
@@ -86,22 +83,24 @@ pub fn verify_batch(
     let id = EdwardsPoint::optional_multiscalar_mul(
         once(-B_coefficient).chain(zs.iter().cloned()).chain(zhrams),
         B.chain(Rs).chain(As),
-    ).ok_or_else(|| return ErrorCode::BATCH_SIGNATURE_VERIFICATION_FAILURE.value()).unwrap();
+    ).ok_or_else(|| return ErrorCode::BATCH_VERIFICATION_FAILURE.value()).unwrap();
 
     if id.is_identity() {
         ErrorCode::NO_ERROR.value()
     } else {
-        ErrorCode::BATCH_SIGNATURE_VERIFICATION_FAILURE.value()
+        ErrorCode::BATCH_VERIFICATION_FAILURE.value()
     }
 }
 
-pub(crate) fn unwrap_and_verify_batch(batch_sigs : &mut SignatureBatch) {
-    let sigs = batch_sigs.take_signatures().iter().map(|x| Signature::from_bytes(&x).unwrap().into()).collect::<Vec<SignatureExposed>>();
+pub(crate) fn unwrap_and_verify_batch(batch_sigs : &mut SignatureBatch)-> i32 {
+    let sigs = batch_sigs.take_signatures().iter().map(|x| Signature::from_bytes(&x).expect("not decoding sigs").into()).collect::<Vec<SignatureExposed>>();
     let pks = batch_sigs.take_public_keys().iter().map(|x| PublicKey::from_bytes(&x).unwrap()).collect::<Vec<PublicKey>>();
+    let context_vec = batch_sigs.take_context();
 
-    verify_batch(batch_sigs.messages.as_slice(), sigs.as_slice(), pks.as_slice, Some(b"context") );
+    let context = unsafe { slice::from_raw_parts(context_vec.as_ptr(), context_vec.len()) };
+    verify_batch(batch_sigs.messages.as_slice(), sigs.as_slice(), pks.as_slice(), Some(context) )
 }
-
+/*
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -224,3 +223,5 @@ mod tests {
         assert_eq!(result, ErrorCode::SIGNATURE_VERIFICATION_FAILURE.value());
     }
 }
+
+*/

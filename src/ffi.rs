@@ -1,7 +1,7 @@
 //! The foreign function interface which exposes this library to non-Rust
 //! languages. Error codes returned are as defined in protocol protobuffs https://github.com/catalyst-network/protocol-protobuffs/blob/develop/src/Cryptography.proto
 
-use super::*;
+use super::*; 
 use libc::c_int;
 use catalyst_protocol_sdk_rust::Cryptography::SignatureBatch;
 
@@ -48,9 +48,10 @@ pub extern "C" fn std_sign(
 }
 
 #[no_mangle]
-pub extern "C" fn pass_batch(bytes: &[u8]){
-    let mut batch = SignatureBatch::new();
-    batch.merge_from_bytes(bytes);
+pub extern "C" fn pass_batch(bytes: &[u8]) -> c_int{
+    let mut batch_sigs = SignatureBatch::new();
+    batch_sigs.merge_from_bytes(bytes);
+    batch::unwrap_and_verify_batch(&mut batch_sigs)
 }
 
 /// Calculates corresponding public key, given a private key. 
