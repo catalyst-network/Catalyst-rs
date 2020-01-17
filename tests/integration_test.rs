@@ -68,7 +68,7 @@ mod tests {
         sig_batch.set_context(context.to_vec());
 
         let batch = sig_batch.write_to_bytes().expect("could not write protobuff message to bytes");
-        let result = catalystffi::ffi::pass_batch(batch.as_slice());
+        let result = catalystffi::ffi::batch_verify(batch.as_slice());
         assert_eq!(result, ErrorCode::NO_ERROR.value())
     }
 
@@ -96,7 +96,7 @@ mod tests {
         sig_batch.set_context(b"incorrect context".to_vec());
 
         let batch = sig_batch.write_to_bytes().expect("could not write protobuff message to bytes");
-        let result = catalystffi::ffi::pass_batch(batch.as_slice());
+        let result = catalystffi::ffi::batch_verify(batch.as_slice());
         assert_eq!(result, ErrorCode::BATCH_VERIFICATION_FAILURE.value())  
     }
 }

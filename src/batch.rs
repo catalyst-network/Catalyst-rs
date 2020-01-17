@@ -94,7 +94,12 @@ pub(crate) fn verify_batch(
 
 pub(crate) fn unwrap_and_verify_batch(batch_sigs : &mut SignatureBatch)-> i32 {
     let sigs = batch_sigs.take_signatures().iter().map(|x| Signature::from_bytes(&x).expect("not decoding sigs").into()).collect::<Vec<SignatureExposed>>();
+    if sigs.len() <=0 
+    {
+        return ErrorCode::INVALID_BATCH_MESSAGE.value();
+    }
     let pks = batch_sigs.take_public_keys().iter().map(|x| PublicKey::from_bytes(&x).unwrap()).collect::<Vec<PublicKey>>();
+    
     let context_vec = batch_sigs.take_context();
 
     let context = unsafe { slice::from_raw_parts(context_vec.as_ptr(), context_vec.len()) };

@@ -3,7 +3,7 @@
 
 use super::*; 
 use libc::c_int;
-use catalyst_protocol_sdk_rust::Cryptography::SignatureBatch;
+use catalyst_protocol_sdk_rust::Cryptography::{ErrorCode, SignatureBatch};
 
 /// Verifies that an ed25519 signature corresponds to the provided public key, message, and context. Returns 0 if no error encountered, otherwise returns an error code. Sets value of is_verified based of verification outcome.
 #[no_mangle]
@@ -48,10 +48,12 @@ pub extern "C" fn std_sign(
 }
 
 #[no_mangle]
-pub extern "C" fn pass_batch(bytes: &[u8]) -> c_int{
+pub extern "C" fn batch_verify(bytes: &[u8]) -> c_int{
     let mut batch_sigs = SignatureBatch::new();
-    batch_sigs.merge_from_bytes(bytes);
-    batch::unwrap_and_verify_batch(&mut batch_sigs)
+    match batch_sigs.merge_from_bytes(bytes){
+        Ok(_)=> batch::unwrap_and_verify_batch(&mut batch_sigs),
+        Err(_) => ErrorCode::INVALID_BATCH_MESSAGE.value()
+    }
 }
 
 /// Calculates corresponding public key, given a private key. 
