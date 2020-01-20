@@ -54,7 +54,7 @@ pub extern "C" fn batch_verify(bytes: &[u8]) -> c_int{
         Ok(_)=> batch::unwrap_and_verify_batch(&mut batch_sigs),
         Err(err) => 
         {
-            println!("{;?}", err);
+            println!("{:?}", err);
             ErrorCode::INVALID_BATCH_MESSAGE.value()
         }
     }
