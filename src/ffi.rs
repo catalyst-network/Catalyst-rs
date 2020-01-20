@@ -52,7 +52,6 @@ pub extern "C" fn batch_verify(bytes: &[u8]) -> c_int{
     let mut batch_sigs = SignatureBatch::new();
     batch_sigs.merge_from_bytes(bytes);
     batch::unwrap_and_verify_batch(&mut batch_sigs)
-    }
 }
 
 /// Calculates corresponding public key, given a private key. 
