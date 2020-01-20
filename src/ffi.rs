@@ -50,13 +50,8 @@ pub extern "C" fn std_sign(
 #[no_mangle]
 pub extern "C" fn batch_verify(bytes: &[u8]) -> c_int{
     let mut batch_sigs = SignatureBatch::new();
-    match batch_sigs.merge_from_bytes(bytes){
-        Ok(_)=> batch::unwrap_and_verify_batch(&mut batch_sigs),
-        Err(err) => 
-        {
-            println!("{:?}", err);
-            ErrorCode::INVALID_BATCH_MESSAGE.value()
-        }
+    batch_sigs.merge_from_bytes(bytes);
+    batch::unwrap_and_verify_batch(&mut batch_sigs)
     }
 }
 
