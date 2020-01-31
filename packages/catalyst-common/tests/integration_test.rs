@@ -1,4 +1,4 @@
-extern crate catalyst_protocol_sdk_rust;
+/*extern crate catalyst_protocol_sdk_rust;
 extern crate catalystffi;
 
 pub use catalyst_protocol_sdk_rust::prelude::*;
@@ -44,3 +44,4 @@ mod tests {
         assert_eq!(verified, ErrorCode::SIGNATURE_VERIFICATION_FAILURE.value())
     }
 }
+*/

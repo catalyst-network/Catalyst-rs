@@ -29,3 +29,5 @@ steps:
     displayName: Cargo build
   - script: cargo test --all --verbose
     displayName: Cargo test
+  - script: cargo test --features random-generation
+    displayName: Cargo test feature branches

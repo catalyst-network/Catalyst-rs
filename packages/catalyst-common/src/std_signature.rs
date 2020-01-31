@@ -42,18 +42,6 @@ pub(crate) fn unwrap_and_sign(
     out_signature.copy_from_slice(&signature.to_bytes());
     ErrorCode::NO_ERROR.value()
 }
-/// Creates an ed25519ph signature from private key, context and message.
-pub fn sign(
-    secret: SecretKey,
-    public: PublicKey,
-    message: &[u8],
-    context: Option<&'static [u8]>,
-) -> Signature {
-    let keypair: Keypair = Keypair { secret, public };
-    let mut prehashed: Sha512 = Sha512::new();
-    prehashed.input(message);
-    keypair.sign_prehashed(prehashed, context)
-}
 
 pub(crate) fn unwrap_and_verify(
     signature: &[u8; constants::SIGNATURE_LENGTH],

@@ -1,9 +1,8 @@
 //! ed25519 keys
 
-use crate::constants;
-pub use catalyst_protocol_sdk_rust::prelude::*;
-pub use catalyst_protocol_sdk_rust::Cryptography::ErrorCode;
-use ed25519_dalek::{PublicKey, SecretKey};
+use super::*;
+
+#[cfg(feature = "random-generation")] 
 use rand::thread_rng;
 
 pub fn publickey_from_private(
@@ -19,18 +18,12 @@ pub fn publickey_from_private(
     ErrorCode::NO_ERROR.value()
 }
 
+#[cfg(feature = "random-generation")]
 pub fn generate_key(out_key: &mut [u8; constants::PRIVATE_KEY_LENGTH]) -> i32 {
     let mut csprng = thread_rng();
     let secret_key: SecretKey = SecretKey::generate(&mut csprng);
     out_key.copy_from_slice(&secret_key.to_bytes());
     ErrorCode::NO_ERROR.value()
-}
-
-pub fn validate_public(public_key: &[u8; constants::PUBLIC_KEY_LENGTH]) -> i32 {
-    match PublicKey::from_bytes(public_key) {
-        Ok(_) => ErrorCode::NO_ERROR.value(),
-        Err(_) => ErrorCode::INVALID_PUBLIC_KEY.value(),
-    }
 }
 
 pub fn validate_private(private_key: &[u8; constants::PRIVATE_KEY_LENGTH]) -> i32 {
@@ -44,6 +37,7 @@ pub fn validate_private(private_key: &[u8; constants::PRIVATE_KEY_LENGTH]) -> i3
 mod tests {
     use super::*;
 
+    #[cfg(feature = "random-generation")]
     #[test]
     fn can_generate_private_key() {
         let initial_key: [u8; constants::PRIVATE_KEY_LENGTH] = [0; constants::PRIVATE_KEY_LENGTH];
@@ -56,6 +50,7 @@ mod tests {
         );
     }
 
+    #[cfg(feature = "random-generation")]
     #[test]
     fn can_get_public_key_from_private_key() {
         let mut private_key: [u8; constants::PRIVATE_KEY_LENGTH] =

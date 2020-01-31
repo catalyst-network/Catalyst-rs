@@ -1,0 +1,35 @@
+[package]
+name = "catalyst-common"
+version = "0.1.0"
+authors = ["Fran <fran.sl@atlascity.io> (https://atlascity.io)"]
+edition = "2018"
+description = "A rust library providing functionality from dalek-cryptography along with some custom functions for use in confidential transactions"
+repository = "https://github.com/catalyst-network/catalyst-rs/packages/catalyst-common"
+homepage = "https://github.com/catalyst-network/catalyst-rs/packages/catalyst-common"
+readme = "README.md"
+license = "MIT"
+keywords = ["rust", "cryptography", "crypto", "catalyst", "dalek-cryptography"]
+maintenance = { status = "actively-developed" }
+
+[dependencies]
+ed25519-dalek = { version = "=1.0.0-pre.1", features = ["serde"] }
+catalyst-protocol-sdk-rust = "=0.1.5"
+rand = { version = "0.6", optional = true }
+
+[lib]
+name = "catalyst_common"
+path = "src/lib.rs"
+crate-type = ["cdylib", "lib"]
+
+[features]
+random-generation = ["rand"]
+
+[profile.dev]
+opt-level = 3
+
+[dev-dependencies]
+criterion = "0.3"
+
+[[bench]]
+name = "benchmarks"
+harness = false
