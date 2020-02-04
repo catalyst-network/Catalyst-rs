@@ -1,5 +1,3 @@
-extern crate catalyst_common;
+pub(crate) use catalyst_common::*;
 
-pub use catalyst_common::*;
-
-mod ffi;
+pub mod ffi;

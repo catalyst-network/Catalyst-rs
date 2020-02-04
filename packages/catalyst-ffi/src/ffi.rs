@@ -4,7 +4,7 @@
 use super::*;
 use libc::c_int;
 use std::slice;
-/*
+
 /// Verifies that an ed25519 signature corresponds to the provided public key, message, and context. Returns 0 if no error encountered, otherwise returns an error code. Sets value of is_verified based of verification outcome.
 #[no_mangle]
 pub extern "C" fn std_verify(
@@ -15,16 +15,20 @@ pub extern "C" fn std_verify(
     context: *const u8,
     context_length: usize,
 ) -> c_int {
-    std_signature::unwrap_and_verify(
+    let message = unsafe {
+        slice::from_raw_parts(message, message_length)
+    };
+    let context = unsafe {
+        slice::from_raw_parts(context, context_length)
+    };
+    std_signature::verify(
         signature,
         publickey,
         message,
-        message_length,
         context,
-        context_length,
     )
 }
-*/
+
 /// Creates a signature from private key and message. 
 #[no_mangle]
 pub extern "C" fn std_sign(
@@ -37,19 +41,20 @@ pub extern "C" fn std_sign(
     context_length: usize,
 ) -> c_int {
     let message = unsafe {
-        //assert!(!message.is_null());
         slice::from_raw_parts(message, message_length)
     };
-    base::sign_sig_and_public_key(
+    let context = unsafe {
+        slice::from_raw_parts(context, context_length)
+    };
+    std_signature::sign(
         out_signature,
         out_public_key,
         private_key,
         message,
         context,
-        context_length,
     )
 }
-/*
+
 /// Calculates corresponding public key, given a private key. 
 #[no_mangle]
 pub extern "C" fn publickey_from_private(
@@ -62,13 +67,7 @@ pub extern "C" fn publickey_from_private(
 /// Randomly generated private key.
 #[no_mangle]
 pub extern "C" fn generate_key(out_key: &mut [u8; constants::PRIVATE_KEY_LENGTH]) -> c_int {
-    keys::generate_key(out_key)
-}
-
-/// Checks that the bytes provided represent a valid public key.
-#[no_mangle]
-pub extern "C" fn validate_public_key(public_key: &[u8; constants::PUBLIC_KEY_LENGTH]) -> c_int {
-    keys::validate_public(&public_key)
+    keys::generate_private_key(out_key)
 }
 
 ///Returns private key length in bytes
@@ -94,36 +93,108 @@ pub extern "C" fn get_signature_length() -> c_int {
 pub extern "C" fn get_max_context_length() -> c_int {
     constants::CONTEXT_MAX_LENGTH as i32
 }
-*/
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn can_throw_context_length_error() {
-        
 
-        let initial_sig: [u8; constants::SIGNATURE_LENGTH] = [0; constants::SIGNATURE_LENGTH];
-        let mut out_sig: [u8; constants::SIGNATURE_LENGTH] = Clone::clone(&initial_sig);
+        let mut sig: [u8; constants::SIGNATURE_LENGTH] = [0; constants::SIGNATURE_LENGTH];
+        let mut public_key: [u8; constants::PRIVATE_KEY_LENGTH] = [0; constants::PUBLIC_KEY_LENGTH];
+        let mut private_key: [u8; constants::PRIVATE_KEY_LENGTH] = [0; constants::PRIVATE_KEY_LENGTH];
+        keys::generate_private_key(&mut private_key);
 
-        let mut out_public_key: [u8; constants::PRIVATE_KEY_LENGTH] =
-            [0; constants::PUBLIC_KEY_LENGTH];
+        let message = b"message";
 
-        let context = b"context";
-        println!("********* context length is: {}", context.len());
+        let context: Vec<u8> = (0..256).map(|_| rand::random::<u8>()).collect();
 
-        let mut key: [u8; constants::PRIVATE_KEY_LENGTH] = [0; constants::PRIVATE_KEY_LENGTH];
-        assert_eq!(keys::generate_key(&mut key), ErrorCode::NO_ERROR.value());
-        let message = String::from("You are a sacrifice article that I cut up rough now");
         let error_code = std_sign(
-            &mut out_sig,
-            &mut out_public_key,
-            &key,
+            &mut sig,
+            &mut public_key,
+            &private_key,
             message.as_ptr(),
             message.len(),
-            context,
+            context.as_ptr(),
             context.len(),
         );
         assert_eq!(error_code, ErrorCode::INVALID_CONTEXT_LENGTH.value());
+    }
+
+    #[test]
+    fn can_use_lib_to_sign() {
+        let mut sig: [u8; constants::SIGNATURE_LENGTH] = [0; constants::SIGNATURE_LENGTH];
+        let mut public_key: [u8; constants::PRIVATE_KEY_LENGTH] = [0; constants::PUBLIC_KEY_LENGTH];
+        let mut private_key: [u8; constants::PRIVATE_KEY_LENGTH] = [0; constants::PRIVATE_KEY_LENGTH];
+        generate_key(&mut private_key);
+        let message = b"message";
+        let context = b"context";
+        std_sign(
+            &mut sig,
+            &mut public_key, 
+            &private_key, 
+            message.as_ptr(),
+            message.len(),
+            context.as_ptr(),
+            context.len(),
+        );
+    }
+
+    #[test]
+    fn can_use_lib_to_verify() {
+        let mut sig: [u8; constants::SIGNATURE_LENGTH] = [0; constants::SIGNATURE_LENGTH];
+        let mut public_key: [u8; constants::PRIVATE_KEY_LENGTH] = [0; constants::PUBLIC_KEY_LENGTH];
+        let mut private_key: [u8; constants::PRIVATE_KEY_LENGTH] = [0; constants::PRIVATE_KEY_LENGTH];
+        keys::generate_private_key(&mut private_key);
+        let message = b"message";
+        let context = b"context";
+        std_sign(
+            &mut sig,
+            &mut public_key, 
+            &private_key,
+            message.as_ptr(),
+            message.len(),
+            context.as_ptr(),
+            context.len(),
+        );
+        let verified = std_verify(
+            &mut sig,
+            &mut public_key,
+            message.as_ptr(),
+            message.len(),
+            context.as_ptr(),
+            context.len(),
+        );
+        assert_eq!(verified, ErrorCode::NO_ERROR.value())
+    }
+
+    #[test]
+    fn lib_verification_can_fail() {
+        let mut sig: [u8; constants::SIGNATURE_LENGTH] = [0; constants::SIGNATURE_LENGTH];
+        let mut public_key: [u8; constants::PRIVATE_KEY_LENGTH] = [0; constants::PUBLIC_KEY_LENGTH];
+        let mut private_key: [u8; constants::PRIVATE_KEY_LENGTH] = [0; constants::PRIVATE_KEY_LENGTH];
+        keys::generate_private_key(&mut private_key);
+        let message = b"message";
+        let context1 = b"context1";
+        let context2 = b"context2";
+        std_sign(
+            &mut sig,
+            &mut public_key, 
+            &private_key,
+            message.as_ptr(),
+            message.len(),
+            context1.as_ptr(),
+            context1.len(),
+        );
+        let verified = std_verify(
+            &sig,
+            &public_key, 
+            message.as_ptr(),
+            message.len(),
+            context2.as_ptr(),
+            context2.len(),
+        );
+        assert_eq!(verified, ErrorCode::SIGNATURE_VERIFICATION_FAILURE.value())
     }
 }

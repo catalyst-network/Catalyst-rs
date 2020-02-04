@@ -12,7 +12,7 @@ keywords = ["rust", "cryptography", "crypto", "catalyst", "dalek-cryptography"]
 maintenance = { status = "actively-developed" }
 
 [dependencies]
-ed25519-dalek = { version = "=1.0.0-pre.1", features = ["serde"] }
+ed25519-dalek = { version = "1.0.0-pre.1", features = ["nightly", "serde"] }
 catalyst-protocol-sdk-rust = "=0.1.5"
 rand = { version = "0.6", optional = true }
 
@@ -22,7 +22,7 @@ path = "src/lib.rs"
 crate-type = ["cdylib", "lib"]
 
 [features]
-random-generation = ["rand"]
+key-gen = ["rand"]
 
 [profile.dev]
 opt-level = 3

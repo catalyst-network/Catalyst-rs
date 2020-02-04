@@ -1,47 +1,79 @@
-/*extern crate catalyst_protocol_sdk_rust;
-extern crate catalystffi;
-
+use catalyst_common::std_signature::*;
+use catalyst_common::constants::*;
 pub use catalyst_protocol_sdk_rust::prelude::*;
 pub use catalyst_protocol_sdk_rust::Cryptography::ErrorCode;
-use catalystffi::{PublicKey, SecretKey};
-use rand::thread_rng;
+
+
 
 #[cfg(test)]
-mod tests {
+mod integration_tests {
     use super::*;
+
     #[test]
-    fn can_use_lib_to_sign() {
-        let mut csprng = thread_rng();
-        let private: SecretKey = SecretKey::generate(&mut csprng);
-        let public: PublicKey = (&private).into();
+    fn can_create_signature() {
+        let mut sig: [u8; SIGNATURE_LENGTH] = [0; SIGNATURE_LENGTH];
+        let mut public_key: [u8; PUBLIC_KEY_LENGTH] = [0; PUBLIC_KEY_LENGTH];
+        let private_key: [u8; PRIVATE_KEY_LENGTH] = [0; PRIVATE_KEY_LENGTH];
         let message = b"message";
         let context = b"context";
-        let _sig = catalystffi::std_signature::sign(private, public, message, Some(context));
+        let result = sign(&mut sig, &mut public_key, &private_key, message, context);
+        assert_eq!(result, ErrorCode::NO_ERROR.value());
     }
 
     #[test]
-    fn can_use_lib_to_verify() {
-        let mut csprng = thread_rng();
-        let private: SecretKey = SecretKey::generate(&mut csprng);
-        let public: PublicKey = (&private).into();
-        let message = b"message";
-        let context = b"context";
-        let sig = catalystffi::std_signature::sign(private, public, message, Some(context));
-        let verified = catalystffi::std_signature::verify(sig, public, message, Some(context));
-        assert_eq!(verified, ErrorCode::NO_ERROR.value())
+    fn can_sign_message_and_verify_signature() {
+        let mut sig: [u8; SIGNATURE_LENGTH] = [0; SIGNATURE_LENGTH];
+        let mut public_key: [u8; PRIVATE_KEY_LENGTH] = [0; PUBLIC_KEY_LENGTH];
+        let private_key: [u8; PRIVATE_KEY_LENGTH] = [0; PRIVATE_KEY_LENGTH];
+
+        let message = b"You are a sacrifice article that I cut up rough now";
+        let context = b"Context 1 2 3";
+        sign(
+            &mut sig,
+            &mut public_key,
+            &private_key,
+            message,
+            context,
+        );
+
+        assert_eq!(
+            verify(
+                &sig,
+                &public_key,
+                message,
+                context,
+            ),
+            ErrorCode::NO_ERROR.value()
+        );
     }
 
     #[test]
-    fn lib_verification_can_fail() {
-        let mut csprng = thread_rng();
-        let private: SecretKey = SecretKey::generate(&mut csprng);
-        let public: PublicKey = (&private).into();
-        let message = b"message";
-        let context1 = b"context1";
-        let context2 = b"context2";
-        let sig = catalystffi::std_signature::sign(private, public, message, Some(context1));
-        let verified = catalystffi::std_signature::verify(sig, public, message, Some(context2));
-        assert_eq!(verified, ErrorCode::SIGNATURE_VERIFICATION_FAILURE.value())
+    fn can_sign_message_and_verify_signature_with_empty_context() {
+        let mut sig: [u8; SIGNATURE_LENGTH] = [0; SIGNATURE_LENGTH];
+        let mut public_key: [u8; PRIVATE_KEY_LENGTH] = [0; PUBLIC_KEY_LENGTH];
+        let private_key: [u8; PRIVATE_KEY_LENGTH] = [0; PRIVATE_KEY_LENGTH];
+
+        let message = b"You are a sacrifice article that I cut up rough now";
+        let context = b"";
+        assert_eq!(
+            sign(
+                &mut sig,
+                &mut public_key,
+                &private_key,
+                message,
+                context,
+            ),
+            ErrorCode::NO_ERROR.value()
+        );
+
+        assert_eq!(
+            verify(
+                &sig,
+                &public_key,
+                message,
+                context,
+            ),
+            ErrorCode::NO_ERROR.value()
+        );
     }
 }
-*/
