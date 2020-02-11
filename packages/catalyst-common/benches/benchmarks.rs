@@ -1,18 +1,16 @@
-#[macro_use] extern crate criterion;
+#[macro_use]
+extern crate criterion;
 
+use catalyst_common::constants;
+use catalyst_common::keys;
+use catalyst_common::std_signature;
 use criterion::black_box;
 use criterion::Criterion;
-use catalyst_common::constants;
-use catalyst_common::std_signature;
-use catalyst_common::keys;
-
-
-
 
 pub fn sign_benchmark(c: &mut Criterion) {
-    let mut sig: [u8; constants::SIGNATURE_LENGTH] = [0; constants::SIGNATURE_LENGTH];
-    let mut public_key: [u8; constants::PUBLIC_KEY_LENGTH] = [0; constants::PUBLIC_KEY_LENGTH];
-    let private_key: [u8; constants::PRIVATE_KEY_LENGTH] = [0; constants::PRIVATE_KEY_LENGTH];
+    let mut sig = [0u8; constants::SIGNATURE_LENGTH];
+    let private_key = [0u8; constants::PRIVATE_KEY_LENGTH];
+    let mut public_key = [0u8; constants::PUBLIC_KEY_LENGTH];
 
     let message = b"Message 1 2 3";
     let context = b"Context 1 2 3";
@@ -30,20 +28,14 @@ pub fn sign_benchmark(c: &mut Criterion) {
 }
 
 pub fn verify_benchmark(c: &mut Criterion) {
-    let mut sig: [u8; constants::SIGNATURE_LENGTH] = [0; constants::SIGNATURE_LENGTH];
-    let mut public_key: [u8; constants::PUBLIC_KEY_LENGTH] = [0; constants::PUBLIC_KEY_LENGTH];
-    let private_key: [u8; constants::PRIVATE_KEY_LENGTH] = [0; constants::PRIVATE_KEY_LENGTH];
+    let mut sig = [0u8; constants::SIGNATURE_LENGTH];
+    let private_key = [0u8; constants::PRIVATE_KEY_LENGTH];
+    let mut public_key = [0u8; constants::PUBLIC_KEY_LENGTH];
 
     let message = b"Message 1 2 3";
     let context = b"Context 1 2 3";
 
-    std_signature::sign(
-        &mut sig,
-        &mut public_key,
-        &private_key,
-        message,
-        context,
-    );
+    std_signature::sign(&mut sig, &mut public_key, &private_key, message, context);
     keys::publickey_from_private(&mut public_key, &private_key);
 
     c.bench_function("verify ed25519ph", |b| {

@@ -1,21 +1,28 @@
 [package]
 name = "catalyst-ffi"
 version = "0.1.0"
-authors = ["fran <fran.sl@atlascity.io>"]
+authors = ["Fran <fran.sl@atlascity.io> (https://atlascity.io)"]
 edition = "2018"
+description = "A rust library providing functionality from dalek-cryptography along with some custom functions for use in confidential transactions"
+repository = "https://github.com/catalyst-network/catalyst-rs/packages/catalyst-ffi"
+homepage = "https://github.com/catalyst-network/catalyst-rs/packages/catalyst-ffi"
+readme = "README.md"
+license = "MIT"
+keywords = ["rust", "cryptography", "crypto", "catalyst", "dalek-cryptography"]
+maintenance = { status = "actively-developed" }
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 catalyst-common = { path = "../catalyst-common", features=["key-gen"] }
 libc = "0.2.66"
-rand = "0.7.3"
 
 [profile.dev]
 opt-level = 3
 
 [dev-dependencies]
 criterion = "0.3"
+hex = "0.4.1"
 
 [[bench]]
 name = "benchmarks"
