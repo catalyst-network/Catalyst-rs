@@ -1,5 +1,7 @@
+//! ed25519ph signature and verification
+
 use super::*;
-use ed25519_dalek::Signature;
+use ed25519_dalek::{Signature, Sha512, Digest};
 
 #[inline]
 pub fn sign(
