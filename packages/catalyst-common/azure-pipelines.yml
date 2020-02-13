@@ -25,9 +25,9 @@ steps:
       echo "##vso[task.setvariable variable=PATH;]%PATH%;%USERPROFILE%\.cargo\bin"
     displayName: Windows install rust
     condition: eq( variables['Agent.OS'], 'Windows_NT' )
-  - script: cargo build --all --verbose
+  - script: cd packages/catalyst-common && cargo build --all --verbose
     displayName: Cargo build
-  - script: cargo test --all --verbose
+  - script: cd packages/catalyst-common && cargo test --all --verbose
     displayName: Cargo test
-  - script: cargo test --features key-gen
+  - script: cd packages/catalyst-common && cargo test --features key-gen
     displayName: Cargo test key-gen build
