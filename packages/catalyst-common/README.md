@@ -10,7 +10,7 @@
 [![Subreddit subscribers](https://img.shields.io/reddit/subreddit-subscribers/catalystnet?style=social)](https://reddit.com/r/catalystnet)
 </div>
 
-A rust monorepo providing functionality from dalek-cryptography along with some custom functions
+A rust library providing functionality from dalek-cryptography along with some custom functions for use in confidential transactions
 
 ## Install
 
@@ -24,6 +24,16 @@ If ```rustc --version``` fails, restart your console to ensure changes to ```PAT
 
 TODO. We don't have this section done yet. If you'd like to help us by opening a PR for it, please do so!
 
+## Testing
+
+To build and run the tests:
+```cargo test```
+
+To test with key generation enabled:
+```cargo test --features key-gen```
+
+For benchmarking:
+```cargo bench```
 
 ## Contribute
 
