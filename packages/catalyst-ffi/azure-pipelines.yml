@@ -1,3 +1,7 @@
+pr:
+- develop
+- master
+
 strategy:
   matrix:
     windows-stable:
