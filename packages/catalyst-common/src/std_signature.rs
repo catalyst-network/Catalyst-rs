@@ -75,11 +75,10 @@ mod tests {
         let mut sig = [0u8; constants::SIGNATURE_LENGTH];
         let mut public_key = [0u8; constants::PUBLIC_KEY_LENGTH];
         let private_key = [0u8; constants::PRIVATE_KEY_LENGTH];
-
         let message = b"message";
         let context = b"Context 1 2 3";
+        
         sign(&mut sig, &mut public_key, &private_key, message, context);
-
         assert_eq!(
             verify(&sig, &public_key, message, context,),
             ErrorCode::NO_ERROR.value()
@@ -91,10 +90,10 @@ mod tests {
         let mut sig = [0u8; constants::SIGNATURE_LENGTH];
         let mut public_key = [0u8; constants::PUBLIC_KEY_LENGTH];
         let private_key = [0u8; constants::PRIVATE_KEY_LENGTH];
-
         let message = b"message";
         let context1 = b"Context 1 2 3";
         let context2 = b"Context 1 2 3 4";
+        
         sign(&mut sig, &mut public_key, &private_key, message, context1);
         let verified = verify(&sig, &public_key, message, context2);
         assert_eq!(verified, ErrorCode::SIGNATURE_VERIFICATION_FAILURE.value())
@@ -105,11 +104,10 @@ mod tests {
         let mut sig = [0u8; constants::SIGNATURE_LENGTH];
         let mut public_key = [0u8; constants::PUBLIC_KEY_LENGTH];
         let private_key = [0u8; constants::PRIVATE_KEY_LENGTH];
-
         let message = b"message";
         let context = b"2hPB7lVGQHENtQLcfOoTnEjBHO5jg0zgyQYyrKHOxywDrDDfmyg0z9M9Q0hRRfPUV4fWvRGR9l48a3cXmFqBPneErN5GwzD28E3cLhDRNAdaNEpelPRDzN4w2dGaNWc4Jrc7TlVEbC5JQdfMgmtPkakmF3mPCU1YUFQArFUbQFQdFLHL2PByvyzdHaStkSgZbCz0zb9jCBO0vwx4J6YXvXFoc9urYREcR7uiFEVcrf6L2C2uUVOtWQUHRQyIRtmx";
+        
         let result = sign(&mut sig, &mut public_key, &private_key, message, context);
-
         assert_eq!(result, ErrorCode::INVALID_CONTEXT_LENGTH.value())
     }
 
@@ -118,9 +116,9 @@ mod tests {
         let mut sig = [0u8; constants::SIGNATURE_LENGTH];
         let mut public_key = [0u8; constants::PUBLIC_KEY_LENGTH];
         let private_key = [0u8; constants::PRIVATE_KEY_LENGTH];
-
         let message = b"message";
         let context = b"Context 1 2 3";
+
         sign(&mut sig, &mut public_key, &private_key, message, context);
         public_key[constants::PUBLIC_KEY_LENGTH - 1] =
             public_key[constants::PUBLIC_KEY_LENGTH - 1].wrapping_add(1u8);
@@ -149,9 +147,9 @@ mod tests {
         let mut sig = [0u8; constants::SIGNATURE_LENGTH];
         let mut public_key = [0u8; constants::PUBLIC_KEY_LENGTH];
         let private_key = [0u8; constants::PRIVATE_KEY_LENGTH];
-
         let message = b"message";
         let context = b"";
+
         assert_eq!(
             sign(&mut sig, &mut public_key, &private_key, message, context,),
             ErrorCode::NO_ERROR.value()
@@ -161,5 +159,20 @@ mod tests {
             verify(&sig, &public_key, message, context,),
             ErrorCode::NO_ERROR.value()
         );
+    }
+
+    #[test]
+    fn sign_returns_same_public_key_as_publickey_from_private(){
+        let mut sig = [0u8; constants::SIGNATURE_LENGTH];
+        let mut public_key = [0u8; constants::PUBLIC_KEY_LENGTH];
+        let mut public_key2 = [0u8; constants::PUBLIC_KEY_LENGTH];
+        let private_key = [1u8; constants::PRIVATE_KEY_LENGTH];
+        let message = b"message";
+        let context = b"Context 1 2 3";
+
+        sign(&mut sig, &mut public_key, &private_key, message, context);
+        keys::publickey_from_private(&mut public_key2, &private_key);
+        
+        assert_eq!(public_key,public_key2);
     }
 }
