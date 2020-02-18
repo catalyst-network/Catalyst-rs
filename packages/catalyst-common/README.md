@@ -10,7 +10,7 @@
 [![Subreddit subscribers](https://img.shields.io/reddit/subreddit-subscribers/catalystnet?style=social)](https://reddit.com/r/catalystnet)
 </div>
 
-A rust library providing functionality from dalek-cryptography along with some custom functions for use in confidential transactions
+A rust library providing functionality from dalek-cryptography along with some custom functions
 
 ## Install
 

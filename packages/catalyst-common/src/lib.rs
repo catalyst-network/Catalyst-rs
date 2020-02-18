@@ -10,3 +10,5 @@ pub(crate) use ed25519_dalek::{Keypair, PublicKey, SecretKey};
 pub mod constants;
 pub mod keys;
 pub mod std_signature;
+pub mod batch;
+pub mod extensions;

@@ -1,4 +1,4 @@
-//! ed25519 keys
+//! ed25519ph keys
 
 use super::*;
 
