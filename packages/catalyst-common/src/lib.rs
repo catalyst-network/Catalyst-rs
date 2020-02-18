@@ -2,6 +2,7 @@
 
 extern crate catalyst_protocol_sdk_rust;
 extern crate ed25519_dalek;
+extern crate rand;
 
 pub use catalyst_protocol_sdk_rust::prelude::*;
 pub use catalyst_protocol_sdk_rust::Cryptography::ErrorCode;

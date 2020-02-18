@@ -7,25 +7,25 @@ use curve25519_dalek::edwards::EdwardsPoint;
 use curve25519_dalek::scalar::Scalar;
 use curve25519_dalek::traits::IsIdentity;
 use curve25519_dalek::traits::VartimeMultiscalarMul;
+use crate::extensions::{SignatureExposed, PublicKeyExt};
 
 use std::slice;
 
-#[cfg(feature = "key-gen")]
-use rand::thread_rng;
 
 use ed25519_dalek::{Sha512, Digest};
 use catalyst_protocol_sdk_rust::Cryptography::{ErrorCode, SignatureBatch};
-use extensions::{SignatureExposed, PublicKeyExt};
+use rand::{CryptoRng, RngCore};
 
-#[allow(dead_code)]
 #[allow(non_snake_case)]
-#[cfg(feature = "key-gen")]
-pub(crate) fn verify_batch(
-    messages: &[Vec<u8>],
+pub(crate) fn verify_batch<T>(
+    messages: &[&[u8]],
     sigs: &[SignatureExposed],
     public_keys: &[PublicKey],
     context: Option<&'static [u8]>,
+    mut csprng : &mut T,
 ) -> i32
+where 
+    T: CryptoRng + RngCore, 
 {
     // Return an error code if any of the vectors are not the same size as the others.
     if sigs.len() != messages.len() ||
@@ -86,7 +86,6 @@ pub(crate) fn verify_batch(
     }
 }
 
-#[cfg(feature = "key-gen")]
 pub(crate) fn unwrap_and_verify_batch(batch_sigs : &mut SignatureBatch)-> i32 {
     let sigs = batch_sigs.take_signatures().iter().map(|x| Signature::from_bytes(&x).expect("not decoding sigs").into()).collect::<Vec<SignatureExposed>>();
     if sigs.len() <=0 
@@ -98,25 +97,23 @@ pub(crate) fn unwrap_and_verify_batch(batch_sigs : &mut SignatureBatch)-> i32 {
     let context_vec = batch_sigs.take_context();
 
     let context = unsafe { slice::from_raw_parts(context_vec.as_ptr(), context_vec.len()) };
-    verify_batch(batch_sigs.messages.as_slice(), sigs.as_slice(), pks.as_slice(), Some(context) )
+    verify_batch(batch_sigs.messages.as_slice(), sigs.as_slice(), pks.as_slice(), Some(context), &mut csprng)
 }
 
-#[cfg(feature = "key-gen")]
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rand::thread_rng;
-    use rand::rngs::ThreadRng;
+    use rand::rngs::OsRng;
 
     #[test]
     fn batch_verify_validates_multiple_correct_signatures() {
+        let mut csprng = OsRng{};
         let messages: [&[u8]; 5] = [
             b"'Twas brillig, and the slithy toves",
             b"Did gyre and gimble in the wabe:",
             b"All mimsy were the borogoves,",
             b"And the mome raths outgrabe.",
-            b"'Beware the Jabberwock, my son!", ];
-        let mut csprng: ThreadRng = thread_rng();
+            b"'Beware the Jabberwock, my son!", ];   
         let mut keypairs: Vec<Keypair> = Vec::new();
         let mut signatures: Vec<Signature> = Vec::new();
         let context = b"any old context";
@@ -131,20 +128,20 @@ mod tests {
 
         let public_keys: Vec<PublicKey> = keypairs.iter().map(|key| key.public).collect();       
 
-        let result = verify_batch(&messages, &signatures, &public_keys, Some(context));
+        let result = verify_batch(&messages, &signatures, &public_keys, Some(context), &mut csprng);
 
         assert_eq!(result, ErrorCode::NO_ERROR.value());
     }
 
     #[test]
     fn batch_verify_fails_on_single_incorrect_message() {
+        let mut csprng = OsRng{};
         let mut messages: [&[u8]; 5] = [
             b"'Twas brillig, and the slithy toves",
             b"Did gyre and gimble in the wabe:",
             b"All mimsy were the borogoves,",
             b"And the mome raths outgrabe.",
             b"'Beware the Jabberwock, my son!", ];
-        let mut csprng: ThreadRng = thread_rng();
         let mut keypairs: Vec<Keypair> = Vec::new();
         let mut signatures: Vec<Signature> = Vec::new();
         let context = b"any old context";
@@ -161,20 +158,20 @@ mod tests {
 
         let public_keys: Vec<PublicKey> = keypairs.iter().map(|key| key.public).collect();
         
-        let result = verify_batch(&messages, &signatures, &public_keys, Some(context));
+        let result = verify_batch(&messages, &signatures, &public_keys, Some(context), &mut csprng);
 
         assert_eq!(result, ErrorCode::SIGNATURE_VERIFICATION_FAILURE.value());
     }
 
     #[test]
     fn batch_verify_fails_on_single_incorrect_signature() {
+        let mut csprng = OsRng{};
         let messages: [&[u8]; 5] = [
             b"'Twas brillig, and the slithy toves",
             b"Did gyre and gimble in the wabe:",
             b"All mimsy were the borogoves,",
             b"And the mome raths outgrabe.",
             b"'Beware the Jabberwock, my son!", ];
-        let mut csprng: ThreadRng = thread_rng();
         let mut keypairs: Vec<Keypair> = Vec::new();
         let mut signatures: Vec<Signature> = Vec::new();
         let context = b"any old context";
@@ -191,20 +188,20 @@ mod tests {
 
         let public_keys: Vec<PublicKey> = keypairs.iter().map(|key| key.public).collect();
         
-        let result = verify_batch(&messages, &signatures, &public_keys, Some(context));
+        let result = verify_batch(&messages, &signatures, &public_keys, Some(context), &mut csprng);
 
         assert_eq!(result, ErrorCode::SIGNATURE_VERIFICATION_FAILURE.value());
     }
 
     #[test]
     fn batch_verify_fails_on_incorrect_context() {
+        let mut csprng = OsRng{};
         let messages: [&[u8]; 5] = [
             b"'Twas brillig, and the slithy toves",
             b"Did gyre and gimble in the wabe:",
             b"All mimsy were the borogoves,",
             b"And the mome raths outgrabe.",
             b"'Beware the Jabberwock, my son!", ];
-        let mut csprng: ThreadRng = thread_rng();
         let mut keypairs: Vec<Keypair> = Vec::new();
         let mut signatures: Vec<Signature> = Vec::new();
         let context = b"any old context";
@@ -219,9 +216,8 @@ mod tests {
 
         let public_keys: Vec<PublicKey> = keypairs.iter().map(|key| key.public).collect();
         
-        let result = verify_batch(&messages, &signatures, &public_keys, Some(b"a different context"));
+        let result = verify_batch(&messages, &signatures, &public_keys, Some(b"a different context"), &mut csprng);
 
         assert_eq!(result, ErrorCode::SIGNATURE_VERIFICATION_FAILURE.value());
     }
 }
-
