@@ -23,7 +23,7 @@ pub(crate) fn verify_batch<T>(
     sigs: &[SignatureExposed],
     public_keys: &[PublicKey],
     context: Option<&'static [u8]>,
-    mut csprng : &mut T,
+    csprng : &mut T,
 ) -> i32
 where 
     T: CryptoRng + RngCore, 
@@ -101,7 +101,7 @@ where
     let context_vec = batch_sigs.take_context();
 
     let context = unsafe { slice::from_raw_parts(context_vec.as_ptr(), context_vec.len()) };
-    verify_batch(&(batch_sigs.messages.as_slice()), sigs.as_slice(), pks.as_slice(), Some(context), &mut csprng)
+    verify_batch(batch_sigs.messages.as_slice(), sigs.as_slice(), pks.as_slice(), Some(context), &mut csprng)
 }
 
 #[cfg(test)]
@@ -112,12 +112,12 @@ mod tests {
     #[test]
     fn batch_verify_validates_multiple_correct_signatures() {
         let mut csprng = OsRng{};
-        let messages: [&[u8]; 5] = [
-            b"'Twas brillig, and the slithy toves",
-            b"Did gyre and gimble in the wabe:",
-            b"All mimsy were the borogoves,",
-            b"And the mome raths outgrabe.",
-            b"'Beware the Jabberwock, my son!", ];   
+        let messages: [Vec<u8>;5] = [
+            b"'Twas brillig, and the slithy toves".to_vec(),
+            b"Did gyre and gimble in the wabe:".to_vec(),
+            b"All mimsy were the borogoves,".to_vec(),
+            b"And the mome raths outgrabe.".to_vec(),
+            b"'Beware the Jabberwock, my son!".to_vec(), ];
         let mut keypairs: Vec<Keypair> = Vec::new();
         let mut signatures: Vec<SignatureExposed> = Vec::new();
         let context = b"any old context";
@@ -140,12 +140,12 @@ mod tests {
     #[test]
     fn batch_verify_fails_on_single_incorrect_message() {
         let mut csprng = OsRng{};
-        let mut messages: [Vec<u8>] = [
-            b"'Twas brillig, and the slithy toves",
-            b"Did gyre and gimble in the wabe:",
-            b"All mimsy were the borogoves,",
-            b"And the mome raths outgrabe.",
-            b"'Beware the Jabberwock, my son!", ];
+        let mut messages: [Vec<u8>;5] = [
+            b"'Twas brillig, and the slithy toves".to_vec(),
+            b"Did gyre and gimble in the wabe:".to_vec(),
+            b"All mimsy were the borogoves,".to_vec(),
+            b"And the mome raths outgrabe.".to_vec(),
+            b"'Beware the Jabberwock, my son!".to_vec(), ];
         let mut keypairs: Vec<Keypair> = Vec::new();
         let mut signatures: Vec<SignatureExposed> = Vec::new();
         let context = b"any old context";
@@ -158,33 +158,33 @@ mod tests {
             keypairs.push(keypair);
         }
         //alter a message before batch verification
-        messages[4] = b"The jaws that bite, the claws that catch!";
+        messages[4] = b"The jaws that bite, the claws that catch!".to_vec();
 
         let public_keys: Vec<PublicKey> = keypairs.iter().map(|key| key.public).collect();
         
         let result = verify_batch(&messages, &signatures, &public_keys, Some(context), &mut csprng);
 
-        assert_eq!(result, ErrorCode::SIGNATURE_VERIFICATION_FAILURE.value());
+        assert_eq!(result, ErrorCode::BATCH_VERIFICATION_FAILURE.value());
     }
 
     #[test]
     fn batch_verify_fails_on_single_incorrect_signature() {
         let mut csprng = OsRng{};
-        let messages: [Vec<u8>] = [
-            b"'Twas brillig, and the slithy toves",
-            b"Did gyre and gimble in the wabe:",
-            b"All mimsy were the borogoves,",
-            b"And the mome raths outgrabe.",
-            b"'Beware the Jabberwock, my son!", ];
+        let messages: [Vec<u8>;5] = [
+            b"'Twas brillig, and the slithy toves".to_vec(),
+            b"Did gyre and gimble in the wabe:".to_vec(),
+            b"All mimsy were the borogoves,".to_vec(),
+            b"And the mome raths outgrabe.".to_vec(),
+            b"'Beware the Jabberwock, my son!".to_vec(), ];
         let mut keypairs: Vec<Keypair> = Vec::new();
-        let mut signatures: Vec<Signature> = Vec::new();
+        let mut signatures: Vec<SignatureExposed> = Vec::new();
         let context = b"any old context";
 
         for i in 0..messages.len() {
             let keypair: Keypair = Keypair::generate(&mut csprng);
             let mut h = Sha512::default();
             h.input(&messages[i]);
-            signatures.push(keypair.sign_prehashed(h, Some(context)));
+            signatures.push(keypair.sign_prehashed(h, Some(context)).into());
             keypairs.push(keypair);
         }
         //alter a signature before batch verification
@@ -194,18 +194,18 @@ mod tests {
         
         let result = verify_batch(&messages, &signatures, &public_keys, Some(context), &mut csprng);
 
-        assert_eq!(result, ErrorCode::SIGNATURE_VERIFICATION_FAILURE.value());
+        assert_eq!(result, ErrorCode::BATCH_VERIFICATION_FAILURE.value());
     }
 
     #[test]
     fn batch_verify_fails_on_incorrect_context() {
         let mut csprng = OsRng{};
-        let messages: [Vec<u8>] = [
-            b"'Twas brillig, and the slithy toves",
-            b"Did gyre and gimble in the wabe:",
-            b"All mimsy were the borogoves,",
-            b"And the mome raths outgrabe.",
-            b"'Beware the Jabberwock, my son!", ];
+        let messages: [Vec<u8>;5] = [
+            b"'Twas brillig, and the slithy toves".to_vec(),
+            b"Did gyre and gimble in the wabe:".to_vec(),
+            b"All mimsy were the borogoves,".to_vec(),
+            b"And the mome raths outgrabe.".to_vec(),
+            b"'Beware the Jabberwock, my son!".to_vec(), ];
         let mut keypairs: Vec<Keypair> = Vec::new();
         let mut signatures: Vec<SignatureExposed> = Vec::new();
         let context = b"any old context";
@@ -222,6 +222,6 @@ mod tests {
         
         let result = verify_batch(&messages, signatures.as_slice(), &public_keys, Some(b"a different context"), &mut csprng);
 
-        assert_eq!(result, ErrorCode::SIGNATURE_VERIFICATION_FAILURE.value());
+        assert_eq!(result, ErrorCode::BATCH_VERIFICATION_FAILURE.value());
     }
 }

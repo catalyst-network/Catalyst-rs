@@ -1,13 +1,8 @@
 //! ed25519ph keys
 
 use super::*;
-<<<<<<< HEAD:packages/catalyst-common/src/keys.rs
 use rand::{CryptoRng, RngCore};
-=======
 
-#[cfg(feature = "key-gen")]
-use rand::thread_rng;
->>>>>>> repo-for-common-functionality:packages/catalyst-common/src/keys.rs
 
 pub fn publickey_from_private(
     out_publickey: &mut [u8; constants::PUBLIC_KEY_LENGTH],
@@ -35,7 +30,6 @@ where
 mod tests {
 
     use super::*;
-    use rand::rngs::OsRng;
 
     #[cfg(feature = "key-gen")]
     #[test]

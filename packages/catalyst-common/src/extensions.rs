@@ -5,6 +5,8 @@ use curve25519_dalek::edwards::EdwardsPoint;
 use ed25519_dalek::Signature;
 
 #[allow(non_snake_case)]
+
+#[derive(Debug, Copy, Clone)]
 pub struct SignatureExposed {
     pub(crate) R: CompressedEdwardsY,
     pub(crate) s: Scalar,
