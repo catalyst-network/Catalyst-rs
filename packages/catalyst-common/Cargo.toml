@@ -14,7 +14,7 @@ maintenance = { status = "actively-developed" }
 [dependencies]
 ed25519-dalek = { version = "1.0.0-pre.1", features = ["nightly", "serde"] }
 catalyst-protocol-sdk-rust = "=0.1.5"
-rand = { version = "0.6", optional = true }
+rand = { version = "0.7.3", optional = true }
 
 [lib]
 name = "catalyst_common"
