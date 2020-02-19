@@ -1,7 +1,13 @@
 //! ed25519ph keys
 
 use super::*;
+<<<<<<< HEAD:packages/catalyst-common/src/keys.rs
 use rand::{CryptoRng, RngCore};
+=======
+
+#[cfg(feature = "key-gen")]
+use rand::thread_rng;
+>>>>>>> repo-for-common-functionality:packages/catalyst-common/src/keys.rs
 
 pub fn publickey_from_private(
     out_publickey: &mut [u8; constants::PUBLIC_KEY_LENGTH],
@@ -25,20 +31,13 @@ where
     ErrorCode::NO_ERROR.value()
 }
 
-
-pub fn validate_private(private_key: &[u8; constants::PRIVATE_KEY_LENGTH]) -> i32 {
-    match SecretKey::from_bytes(private_key) {
-        Ok(_) => ErrorCode::NO_ERROR.value(),
-        Err(_) => ErrorCode::INVALID_PRIVATE_KEY.value(),
-    }
-}
-
 #[cfg(test)]
 mod tests {
 
     use super::*;
     use rand::rngs::OsRng;
 
+    #[cfg(feature = "key-gen")]
     #[test]
     fn can_generate_private_key() {
         let initial_key = [0u8; constants::PRIVATE_KEY_LENGTH];
