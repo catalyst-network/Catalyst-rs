@@ -14,8 +14,9 @@ maintenance = { status = "actively-developed" }
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-catalyst-common = { path = "../catalyst-common", features=["key-gen"] }
+catalyst-common = { path = "../catalyst-common", branch="batch-verification" }
 libc = "0.2.66"
+rand = "0.7.3"
 
 [profile.dev]
 opt-level = 3

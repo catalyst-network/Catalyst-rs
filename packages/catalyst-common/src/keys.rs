@@ -31,7 +31,6 @@ mod tests {
 
     use super::*;
 
-    #[cfg(feature = "key-gen")]
     #[test]
     fn can_generate_private_key() {
         let initial_key = [0u8; constants::PRIVATE_KEY_LENGTH];
