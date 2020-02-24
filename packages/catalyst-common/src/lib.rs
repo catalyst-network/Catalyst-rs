@@ -5,7 +5,7 @@ extern crate ed25519_dalek;
 extern crate rand;
 
 pub use catalyst_protocol_sdk_rust::prelude::*;
-pub use catalyst_protocol_sdk_rust::Cryptography::ErrorCode;
+pub use catalyst_protocol_sdk_rust::Cryptography::{ErrorCode, SignatureBatch};
 pub(crate) use ed25519_dalek::{Keypair, PublicKey, SecretKey};
 
 pub mod constants;
