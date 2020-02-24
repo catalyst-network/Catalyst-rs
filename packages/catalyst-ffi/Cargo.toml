@@ -16,7 +16,7 @@ maintenance = { status = "actively-developed" }
 [dependencies]
 catalyst-common = { path = "../catalyst-common", branch="batch-verification" }
 libc = "0.2.66"
-rand = "0.7.3"
+rand = "0.7"
 
 [profile.dev]
 opt-level = 3

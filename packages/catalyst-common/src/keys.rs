@@ -3,7 +3,6 @@
 use super::*;
 use rand::{CryptoRng, RngCore};
 
-
 pub fn publickey_from_private(
     out_publickey: &mut [u8; constants::PUBLIC_KEY_LENGTH],
     private_key: &[u8; constants::PRIVATE_KEY_LENGTH],
@@ -30,6 +29,7 @@ where
 mod tests {
 
     use super::*;
+    use rand::rngs::OsRng;
 
     #[test]
     fn can_generate_private_key() {

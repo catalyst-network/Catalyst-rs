@@ -4,7 +4,7 @@
 use super::*;
 use libc::c_int;
 use std::slice;
-use rand::Rng;
+use rand::rngs::OsRng;
 use rand::{CryptoRng, RngCore};
 
 /// Verifies that an ed25519 signature corresponds to the provided public key, message, and context. Returns 0 if no error encountered, otherwise returns an error code. Sets value of is_verified based of verification outcome.
@@ -57,7 +57,8 @@ pub extern "C" fn batch_verify(bytes: &[u8]) -> c_int{
 /// Randomly generated private key.
 #[no_mangle]
 pub extern "C" fn generate_private_key(out_key: &mut [u8; constants::PRIVATE_KEY_LENGTH]) -> c_int {
-    keys::generate_private_key(out_key, OsRng{})
+    let mut csprng = OsRng{};
+    keys::generate_private_key(out_key, &mut OsRng{})
 }
 
 ///Returns private key length in bytes

@@ -2,10 +2,8 @@ use catalyst_common::constants;
 use catalyst_common::std_signature::*;
 use catalyst_common::keys::*;
 use catalyst_common::batch::*;
-use catalyst_common::batch::*;
 pub use catalyst_protocol_sdk_rust::prelude::*;
 pub use catalyst_protocol_sdk_rust::Cryptography::{ErrorCode, SignatureBatch};
-use rand::{CryptoRng, RngCore};
 use rand::rngs::OsRng;
 use protobuf::RepeatedField;
 
@@ -121,10 +119,8 @@ mod integration_tests {
     #[test]
     fn batch_verify_validates_multiple_correct_signatures() {
         let mut csprng = OsRng{};
-        let mut sigs = Vec::new();
-        let mut private_keys = Vec::new();
-        let mut public_keys = Vec::new();
-        let mut sigs = Vec::new();
+        let mut sigs : std::vec::Vec<Vec<u8>> = Vec::new();
+        let mut public_keys : std::vec::Vec<Vec<u8>> = Vec::new();
         let mut messages = Vec::new();
         
         messages.push(b"'Twas brillig, and the slithy toves".to_vec());
@@ -137,23 +133,22 @@ mod integration_tests {
         for i in 0..messages.len() {
             let mut sig = [0u8; constants::SIGNATURE_LENGTH];
             let mut public_key = [0u8; constants::PUBLIC_KEY_LENGTH];           
-            let private_key = [0u8; constants::PRIVATE_KEY_LENGTH];
+            let mut private_key = [0u8; constants::PRIVATE_KEY_LENGTH];
             generate_private_key(&mut private_key, &mut csprng);
 
             sign(&mut sig, &mut public_key, &private_key, &messages[i], context);
-            sigs.push(sig);
-
+            sigs.push(sig.to_vec());
+            public_keys.push(public_key.to_vec());
         }
 
-        //protobuf::RepeatedField<::std::vec::Vec<u8>>
-
-        let mut batch_sigs = SignatureBatch::new();
-        
+        let mut batch_sigs = SignatureBatch::new();       
         batch_sigs.set_context(b"context".to_vec());
-        batch_sigs.set_messages(RepeatedField::from_vec(messages));   
+        batch_sigs.set_messages(RepeatedField::from_vec(messages));  
+        batch_sigs.set_signatures(RepeatedField::from_vec(sigs));
+        batch_sigs.set_public_keys(RepeatedField::from_vec(public_keys));
 
-        //let result = unwrap_and_verify_batch();
+        let result = verify_batch(&mut batch_sigs, &mut csprng);
 
-        //assert_eq!(result, ErrorCode::NO_ERROR.value());
+        assert_eq!(result, ErrorCode::NO_ERROR.value());
     }
 }

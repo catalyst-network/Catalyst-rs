@@ -18,7 +18,7 @@ use catalyst_protocol_sdk_rust::Cryptography::{ErrorCode, SignatureBatch};
 use rand::{CryptoRng, RngCore};
 
 #[allow(non_snake_case)]
-pub(crate) fn verify_batch<T>(
+fn verify_batch_unwrapped<T>(
     messages: &[Vec<u8>],
     sigs: &[SignatureExposed],
     public_keys: &[PublicKey],
@@ -87,7 +87,7 @@ where
     }
 }
 
-pub(crate) fn unwrap_and_verify_batch<T>(batch_sigs : &mut SignatureBatch, mut csprng : &mut T) -> i32
+pub fn verify_batch<T>(batch_sigs : &mut SignatureBatch, mut csprng : &mut T) -> i32
 where 
     T: CryptoRng + RngCore, 
 {
@@ -101,7 +101,7 @@ where
     let context_vec = batch_sigs.take_context();
 
     let context = unsafe { slice::from_raw_parts(context_vec.as_ptr(), context_vec.len()) };
-    verify_batch(batch_sigs.messages.as_slice(), sigs.as_slice(), pks.as_slice(), Some(context), &mut csprng)
+    verify_batch_unwrapped(batch_sigs.messages.as_slice(), sigs.as_slice(), pks.as_slice(), Some(context), &mut csprng)
 }
 
 #[cfg(test)]
@@ -132,7 +132,7 @@ mod tests {
 
         let public_keys: Vec<PublicKey> = keypairs.iter().map(|key| key.public).collect();       
 
-        let result = verify_batch(&messages, &signatures.as_slice(), &public_keys, Some(context), &mut csprng);
+        let result = verify_batch_unwrapped(&messages, &signatures.as_slice(), &public_keys, Some(context), &mut csprng);
 
         assert_eq!(result, ErrorCode::NO_ERROR.value());
     }
@@ -162,7 +162,7 @@ mod tests {
 
         let public_keys: Vec<PublicKey> = keypairs.iter().map(|key| key.public).collect();
         
-        let result = verify_batch(&messages, &signatures, &public_keys, Some(context), &mut csprng);
+        let result = verify_batch_unwrapped(&messages, &signatures, &public_keys, Some(context), &mut csprng);
 
         assert_eq!(result, ErrorCode::BATCH_VERIFICATION_FAILURE.value());
     }
@@ -192,7 +192,7 @@ mod tests {
 
         let public_keys: Vec<PublicKey> = keypairs.iter().map(|key| key.public).collect();
         
-        let result = verify_batch(&messages, &signatures, &public_keys, Some(context), &mut csprng);
+        let result = verify_batch_unwrapped(&messages, &signatures, &public_keys, Some(context), &mut csprng);
 
         assert_eq!(result, ErrorCode::BATCH_VERIFICATION_FAILURE.value());
     }
@@ -220,7 +220,7 @@ mod tests {
 
         let public_keys: Vec<PublicKey> = keypairs.iter().map(|key| key.public).collect();
         
-        let result = verify_batch(&messages, signatures.as_slice(), &public_keys, Some(b"a different context"), &mut csprng);
+        let result = verify_batch_unwrapped(&messages, signatures.as_slice(), &public_keys, Some(b"a different context"), &mut csprng);
 
         assert_eq!(result, ErrorCode::BATCH_VERIFICATION_FAILURE.value());
     }
