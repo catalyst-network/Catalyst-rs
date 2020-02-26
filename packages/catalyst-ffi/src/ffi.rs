@@ -296,7 +296,7 @@ mod tests {
             let mut private_key = [0u8; constants::PRIVATE_KEY_LENGTH];
             generate_private_key(&mut private_key);
 
-            sign(&mut sig, &mut public_key, &private_key, &messages[i], context);
+            std_sign(&mut sig, &mut public_key, &private_key, messages[i].as_ptr(), messages[i].len(), context.as_ptr(), context.len());
             sigs.push(sig.to_vec());
             public_keys.push(public_key.to_vec());
         }
@@ -306,8 +306,9 @@ mod tests {
         batch_sigs.set_messages(RepeatedField::from_vec(messages));  
         batch_sigs.set_signatures(RepeatedField::from_vec(sigs));
         batch_sigs.set_public_keys(RepeatedField::from_vec(public_keys));
+        let mut batch = batch_sigs.write_to_bytes().unwrap();
 
-        let result = verify_batch(&mut batch_sigs.decode_to_bytes());
+        let result = verify_batch(&mut batch);
 
         assert_eq!(result, ErrorCode::NO_ERROR.value());
     }
@@ -331,7 +332,7 @@ mod tests {
             let mut private_key = [0u8; constants::PRIVATE_KEY_LENGTH];
             generate_private_key(&mut private_key);
 
-            sign(&mut sig, &mut public_key, &private_key, &messages[i], context);
+            std_sign(&mut sig, &mut public_key, &private_key, messages[i].as_ptr(), messages[i].len(), context.as_ptr(), context.len());
             sigs.push(sig.to_vec());
             public_keys.push(public_key.to_vec());
         }
@@ -343,8 +344,9 @@ mod tests {
         batch_sigs.set_messages(RepeatedField::from_vec(messages));  
         batch_sigs.set_signatures(RepeatedField::from_vec(sigs));
         batch_sigs.set_public_keys(RepeatedField::from_vec(public_keys));
+        let mut batch = batch_sigs.write_to_bytes().unwrap();
 
-        let result = verify_batch(&mut batch_sigs);
+        let result = verify_batch(&mut batch);
 
         assert_eq!(result, ErrorCode::BATCH_VERIFICATION_FAILURE.value());
     }
@@ -368,7 +370,7 @@ mod tests {
             let mut private_key = [0u8; constants::PRIVATE_KEY_LENGTH];
             generate_private_key(&mut private_key);
 
-            sign(&mut sig, &mut public_key, &private_key, &messages[i], context);
+            std_sign(&mut sig, &mut public_key, &private_key, messages[i].as_ptr(), messages[i].len(), context.as_ptr(), context.len());
             sigs.push(sig.to_vec());
             public_keys.push(public_key.to_vec());
         }
@@ -380,8 +382,9 @@ mod tests {
         batch_sigs.set_messages(RepeatedField::from_vec(messages));  
         batch_sigs.set_signatures(RepeatedField::from_vec(sigs));
         batch_sigs.set_public_keys(RepeatedField::from_vec(public_keys));
+        let mut batch = batch_sigs.write_to_bytes().unwrap();
 
-        let result = verify_batch(&mut batch_sigs);
+        let result = verify_batch(&mut batch);
 
         assert_eq!(result, ErrorCode::BATCH_VERIFICATION_FAILURE.value());
     }
@@ -405,7 +408,7 @@ mod tests {
             let mut private_key = [0u8; constants::PRIVATE_KEY_LENGTH];
             generate_private_key(&mut private_key);
 
-            std_sign(&mut sig, &mut public_key, &private_key, &messages[i], context);
+            std_sign(&mut sig, &mut public_key, &private_key, messages[i].as_ptr(), messages[i].len(), context.as_ptr(), context.len());
             sigs.push(sig.to_vec());
             public_keys.push(public_key.to_vec());
         }
@@ -415,8 +418,9 @@ mod tests {
         batch_sigs.set_messages(RepeatedField::from_vec(messages));  
         batch_sigs.set_signatures(RepeatedField::from_vec(sigs));
         batch_sigs.set_public_keys(RepeatedField::from_vec(public_keys));
+        let mut batch = batch_sigs.write_to_bytes().unwrap();
 
-        let result = verify_batch(&mut batch_sigs.decode_to_slice());
+        let result = verify_batch(&mut batch);
 
         assert_eq!(result, ErrorCode::BATCH_VERIFICATION_FAILURE.value());
     }
