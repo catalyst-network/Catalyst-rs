@@ -1,4 +1,5 @@
-### Catalyst Cryptography
+
+  ### Catalyst Cryptography
  
 
 A rust library providing functionality from dalek-cryptography along with some custom functions
