@@ -16,9 +16,12 @@ pub fn publickey_from_private(
     ErrorCode::NO_ERROR.value()
 }
 
-pub fn generate_private_key<T>(out_key: &mut [u8; constants::PRIVATE_KEY_LENGTH], mut csprng : &mut T) -> i32 
-where 
-    T: CryptoRng + RngCore, 
+pub fn generate_private_key<T>(
+    out_key: &mut [u8; constants::PRIVATE_KEY_LENGTH],
+    mut csprng: &mut T,
+) -> i32
+where
+    T: CryptoRng + RngCore,
 {
     let secret_key: SecretKey = SecretKey::generate(&mut csprng);
     out_key.copy_from_slice(&secret_key.to_bytes());
@@ -35,7 +38,7 @@ mod tests {
     fn can_generate_private_key() {
         let initial_key = [0u8; constants::PRIVATE_KEY_LENGTH];
         let mut private_key = Clone::clone(&initial_key);
-        let mut csprng = OsRng{};
+        let mut csprng = OsRng {};
         assert_eq!(private_key, initial_key, "arrays should be the same");
         assert_eq!(
             generate_private_key(&mut private_key, &mut csprng),
