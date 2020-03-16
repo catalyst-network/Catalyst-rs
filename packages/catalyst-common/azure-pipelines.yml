@@ -24,5 +24,3 @@ steps:
     displayName: Cargo build
   - script: cd packages/catalyst-common && cargo test --all --verbose
     displayName: Cargo test
-  - script: cd packages/catalyst-common && cargo test --features key-gen
-    displayName: Cargo test key-gen build
