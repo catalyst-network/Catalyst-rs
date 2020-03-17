@@ -16,6 +16,13 @@ pub fn publickey_from_private(
     ErrorCode::NO_ERROR.value()
 }
 
+pub fn validate_public_key(public_key: &[u8;constants::PUBLIC_KEY_LENGTH]) -> i32 {
+    match PublicKey::from_bytes(public_key) {
+        Ok(_public_key) => ErrorCode::NO_ERROR.value(),
+        Err(_) => ErrorCode::INVALID_PUBLIC_KEY.value(),
+    }
+}
+
 pub fn generate_private_key<T>(
     out_key: &mut [u8; constants::PRIVATE_KEY_LENGTH],
     mut csprng: &mut T,
