@@ -46,6 +46,14 @@ pub extern "C" fn publickey_from_private(
     keys::publickey_from_private(out_publickey, private_key)
 }
 
+/// Checks public key is a valid point on the curve.
+#[no_mangle]
+pub extern "C" fn validate_public_key(
+    public_key: &mut [u8; constants::PUBLIC_KEY_LENGTH]
+) -> c_int {
+    keys::validate_public_key(public_key)
+}
+
 #[no_mangle]
 #[allow(unused_must_use)]
 pub extern "C" fn verify_batch(bytes: &[u8]) -> c_int {
