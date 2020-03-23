@@ -56,7 +56,8 @@ pub extern "C" fn validate_public_key(
 
 #[no_mangle]
 #[allow(unused_must_use)]
-pub extern "C" fn verify_batch(bytes: &[u8]) -> c_int {
+pub extern "C" fn verify_batch(bytes: *const u8, bytes_length: usize,) -> c_int {
+    let bytes = unsafe { slice::from_raw_parts(bytes, bytes_length) };
     let mut batch_sigs = SignatureBatch::new();
     batch_sigs.merge_from_bytes(bytes);
     batch::verify_batch(&mut batch_sigs, &mut OsRng {})
@@ -322,9 +323,9 @@ mod tests {
         batch_sigs.set_messages(RepeatedField::from_vec(messages));
         batch_sigs.set_signatures(RepeatedField::from_vec(sigs));
         batch_sigs.set_public_keys(RepeatedField::from_vec(public_keys));
-        let mut batch = batch_sigs.write_to_bytes().unwrap();
+        let batch = batch_sigs.write_to_bytes().unwrap();
 
-        let result = verify_batch(&mut batch);
+        let result = verify_batch(batch.as_ptr(), batch.len());
 
         assert_eq!(result, ErrorCode::NO_ERROR.value());
     }
@@ -368,9 +369,10 @@ mod tests {
         batch_sigs.set_messages(RepeatedField::from_vec(messages));
         batch_sigs.set_signatures(RepeatedField::from_vec(sigs));
         batch_sigs.set_public_keys(RepeatedField::from_vec(public_keys));
-        let mut batch = batch_sigs.write_to_bytes().unwrap();
+        let batch = batch_sigs.write_to_bytes().unwrap();
 
-        let result = verify_batch(&mut batch);
+        let result = verify_batch(batch.as_ptr(), batch.len());
+
 
         assert_eq!(result, ErrorCode::BATCH_VERIFICATION_FAILURE.value());
     }
@@ -414,9 +416,9 @@ mod tests {
         batch_sigs.set_messages(RepeatedField::from_vec(messages));
         batch_sigs.set_signatures(RepeatedField::from_vec(sigs));
         batch_sigs.set_public_keys(RepeatedField::from_vec(public_keys));
-        let mut batch = batch_sigs.write_to_bytes().unwrap();
+        let batch = batch_sigs.write_to_bytes().unwrap();
 
-        let result = verify_batch(&mut batch);
+        let result = verify_batch(batch.as_ptr(), batch.len());
 
         assert_eq!(result, ErrorCode::BATCH_VERIFICATION_FAILURE.value());
     }
@@ -458,9 +460,9 @@ mod tests {
         batch_sigs.set_messages(RepeatedField::from_vec(messages));
         batch_sigs.set_signatures(RepeatedField::from_vec(sigs));
         batch_sigs.set_public_keys(RepeatedField::from_vec(public_keys));
-        let mut batch = batch_sigs.write_to_bytes().unwrap();
+        let batch = batch_sigs.write_to_bytes().unwrap();
 
-        let result = verify_batch(&mut batch);
+        let result = verify_batch(batch.as_ptr(), batch.len());
 
         assert_eq!(result, ErrorCode::BATCH_VERIFICATION_FAILURE.value());
     }
