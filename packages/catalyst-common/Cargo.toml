@@ -9,7 +9,6 @@ homepage = "https://github.com/catalyst-network/catalyst-rs/packages/catalyst-co
 readme = "README.md"
 license = "MIT"
 keywords = ["rust", "cryptography", "crypto", "catalyst", "dalek-cryptography"]
-maintenance = { status = "actively-developed" }
 
 [dependencies]
 ed25519-dalek = { version = "1.0.0-pre.3", features = ["nightly", "serde"] }
