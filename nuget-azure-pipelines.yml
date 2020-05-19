@@ -1,0 +1,66 @@
+strategy:
+  matrix:
+    windows-stable:
+      imageName: 'vs2017-win2016'
+      rustup_toolchain: stable
+    mac-stable:
+      imageName: 'macos-10.13'
+      rustup_toolchain: stable
+    linux-stable:
+      imageName: 'ubuntu-16.04'
+      rustup_toolchain: stable
+
+pool:
+  vmImage: $(imageName)
+
+steps:
+  - script: cargo build --manifest-path packages/catalyst-ffi/Cargo.toml --verbose
+    displayName: Cargo build 
+  - script: cargo test --manifest-path packages/catalyst-ffi/Cargo.toml --verbose
+    displayName: Cargo test 
+  - task: CopyFiles@2
+    displayName: copy windows runtime
+    condition: eq( variables['Agent.OS'], 'Windows_NT' )
+    inputs:
+      SourceFolder: '$(Build.SourcesDirectory)/packages/catalyst-ffi/target/debug'
+      TargetFolder: '$(Build.ArtifactStagingDirectory)/runtimes/win-x64/native'
+      Contents: 'catalyst_ffi.*'
+  - task: CopyFiles@2
+    displayName: copy macos runtime
+    condition: eq( variables['Agent.OS'], 'Darwin' )
+    inputs:
+      SourceFolder: '$(Build.SourcesDirectory)/packages/catalyst-ffi/target/debug'
+      TargetFolder: '$(Build.ArtifactStagingDirectory)/runtimes/osx-x64/native'
+      Contents: 'libcatalystffi.*'
+  - task: CopyFiles@2
+    displayName: copy linux runtime
+    condition: eq( variables['Agent.OS'], 'Linux' )
+    inputs:
+      SourceFolder: '$(Build.SourcesDirectory)/packages/catalyst-ffi/target/debug'
+      TargetFolder: '$(Build.ArtifactStagingDirectory)/runtimes/linux-x64/native'
+      Contents: 'libcatalyst_ffi.*'
+  - task: CopyFiles@2
+    displayName: copy Licence and csproj for nuget packaging
+    inputs:
+      SourceFolder: '.'
+      Contents: '?(*.csproj|LICENSE)'
+      TargetFolder: '$(Build.ArtifactStagingDirectory)'
+  - task: PublishBuildArtifacts@1
+    displayName: Publish Artifacts
+    inputs:
+      PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+      ArtifactName: artifacts
+  - task: DotNetCoreCLI@2
+    inputs: 
+      command: 'pack'
+      outputDir: '$(Build.ArtifactStagingDirectory)/TestNuget'
+      packDirectory: '$(Build.ArtifactStagingDirectory)/artifacts'
+      packagesToPack: '$(Build.ArtifactStagingDirectory)/artifacts'
+      nobuild: true
+      includesymbols: false
+      includesource: false
+      verbosityPack: 'Diagnostic'
+      failOnStandardError: 'true'
+      buildProperties: 'VersionSuffix=$(Build.BuildId)$(release.type)'
+    timeoutInMinutes: 10
+    condition: succeeded()
