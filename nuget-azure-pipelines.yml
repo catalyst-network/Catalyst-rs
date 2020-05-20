@@ -52,5 +52,4 @@ steps:
     timeoutInMinutes: 10
   - task: PublishBuildArtifacts@1
     displayName: Publish Artifacts
-    inputs:
-    ArtifactName: '$catalystffi-nugets'
+    ArtifactName: 'catalystffi-nugets'
