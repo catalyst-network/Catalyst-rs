@@ -23,39 +23,26 @@ steps:
     condition: eq( variables['Agent.OS'], 'Windows_NT' )
     inputs:
       SourceFolder: '$(Build.SourcesDirectory)/packages/catalyst-ffi/target/debug'
-      TargetFolder: '$(Build.ArtifactStagingDirectory)/runtimes/win-x64/native'
+      TargetFolder: '$./runtimes/win-x64/native'
       Contents: 'catalyst_ffi.*'
   - task: CopyFiles@2
     displayName: copy macos runtime
     condition: eq( variables['Agent.OS'], 'Darwin' )
     inputs:
       SourceFolder: '$(Build.SourcesDirectory)/packages/catalyst-ffi/target/debug'
-      TargetFolder: '$(Build.ArtifactStagingDirectory)/runtimes/osx-x64/native'
-      Contents: 'libcatalystffi.*'
+      TargetFolder: '$./runtimes/osx-x64/native'
+      Contents: 'libcatalyst_ffi.*'
   - task: CopyFiles@2
     displayName: copy linux runtime
     condition: eq( variables['Agent.OS'], 'Linux' )
     inputs:
       SourceFolder: '$(Build.SourcesDirectory)/packages/catalyst-ffi/target/debug'
-      TargetFolder: '$(Build.ArtifactStagingDirectory)/runtimes/linux-x64/native'
+      TargetFolder: '$./runtimes/linux-x64/native'
       Contents: 'libcatalyst_ffi.*'
-  - task: CopyFiles@2
-    displayName: copy Licence and csproj for nuget packaging
-    inputs:
-      SourceFolder: '.'
-      Contents: '?(*.csproj|LICENSE)'
-      TargetFolder: '$(Build.ArtifactStagingDirectory)'
-  - task: PublishBuildArtifacts@1
-    displayName: Publish Artifacts
-    inputs:
-      PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-      ArtifactName: artifacts
   - task: DotNetCoreCLI@2
+    displayName: pack project
     inputs: 
       command: 'pack'
-      outputDir: '$(Build.ArtifactStagingDirectory)/TestNuget'
-      packDirectory: '$(Build.ArtifactStagingDirectory)/artifacts'
-      packagesToPack: '$(Build.ArtifactStagingDirectory)/artifacts'
       nobuild: true
       includesymbols: false
       includesource: false
@@ -63,4 +50,7 @@ steps:
       failOnStandardError: 'true'
       buildProperties: 'VersionSuffix=$(Build.BuildId)$(release.type)'
     timeoutInMinutes: 10
-    condition: succeeded()
+  - task: PublishBuildArtifacts@1
+    displayName: Publish Artifacts
+    inputs:
+    ArtifactName: '$catalystffi-nugets'
