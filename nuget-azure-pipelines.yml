@@ -2,13 +2,13 @@ strategy:
   matrix:
     windows-stable:
       imageName: 'windows-2019'
-      rustup_toolchain: nightly
+      rustup_toolchain: nightly-2020-01-07
     mac-stable:
       imageName: 'macos-10.14'
-      rustup_toolchain: nightly
+      rustup_toolchain: nightly-2020-01-07
     linux-stable:
       imageName: 'ubuntu-18.04'
-      rustup_toolchain: nightly
+      rustup_toolchain: nightly-2020-01-07
 
 pool:
   vmImage: $(imageName)
