@@ -60,7 +60,6 @@ steps:
       includesource: false
       verbosityPack: 'Diagnostic'
       failOnStandardError: 'true'
-      buildProperties: 'VersionSuffix=$(Build.BuildId)$(release.type)'
     timeoutInMinutes: 10
   - task: PublishBuildArtifacts@1
     displayName: Publish Artifacts
