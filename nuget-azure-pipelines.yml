@@ -40,10 +40,17 @@ steps:
       TargetFolder: '$./runtimes/linux-x64/native'
       Contents: 'libcatalyst_ffi.*'
   - task: DotNetCoreCLI@2
+    displayName: 'Build project'
+    inputs:
+      projects: ./*.csproj
+      arguments: '--configuration=$(BuildConfiguration)'
+      failOnStandardError: 'true'
+    timeoutInMinutes: 10
+  - task: DotNetCoreCLI@2
     displayName: pack project
     inputs: 
       command: 'pack'
-      nobuild: false
+      nobuild: true
       includesymbols: false
       includesource: false
       verbosityPack: 'Diagnostic'
