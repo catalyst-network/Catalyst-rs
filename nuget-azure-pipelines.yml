@@ -44,8 +44,9 @@ steps:
       TargetFolder: '$./runtimes/linux-x64/native'
       Contents: 'libcatalyst_ffi.*'
   - task: DotNetCoreCLI@2
-    displayName: 'Build project'
+    displayName: 'restore project'
     inputs:
+      command: 'restore'
       projects: '*.csproj'
       arguments: '--configuration=$(BuildConfiguration)'
       failOnStandardError: 'true'
