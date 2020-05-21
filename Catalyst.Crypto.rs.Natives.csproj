@@ -1,5 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <DisableImplicitFrameworkReferences>true</DisableImplicitFrameworkReferences>
@@ -9,7 +8,6 @@
     <ProjectFileToPack>$(MSBuildProjectFullPath)</ProjectFileToPack>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
-
   <PropertyGroup>
     <PackageId>Catalyst.Crypto.rs.Natives</PackageId>
     <Authors>AtlasCity.io</Authors>
