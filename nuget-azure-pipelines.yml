@@ -43,7 +43,7 @@ steps:
     displayName: pack project
     inputs: 
       command: 'pack'
-      nobuild: true
+      nobuild: false
       includesymbols: false
       includesource: false
       verbosityPack: 'Diagnostic'
