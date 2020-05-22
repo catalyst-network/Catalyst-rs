@@ -48,25 +48,32 @@ steps:
       SourceFolder: '$(Build.SourcesDirectory)/packages/catalyst-ffi/target/debug'
       TargetFolder: '$./runtimes/linux-x64/native'
       Contents: 'libcatalyst_ffi.*'
-  - task: DotNetCoreCLI@2
-    displayName: 'restore project'
+  - task: CopyFiles@2
+    displayName: copy Licence and csproj for nuget packaging
     inputs:
-      command: 'restore'
-      projects: '*.csproj'
-      arguments: '--configuration=$(BuildConfiguration)'
+      SourceFolder: '.'
+      Contents: '$(Build.SourcesDirectory)/(*.csproj|LICENSE)'
+      TargetFolder: '$(Build.ArtifactStagingDirectory)'
+  - task: DotNetCoreCLI@2
+    displayName: 'Build project'
+    inputs:
+      projects: '$(Build.ArtifactStagingDirectory)/*.csproj'
       failOnStandardError: 'true'
     timeoutInMinutes: 10
   - task: DotNetCoreCLI@2
-    displayName: pack project
-    inputs: 
-      command: 'pack'
-      nobuild: false
+    displayName: Pack
+    inputs:
+      command: pack
+      packDirectory: '$(Build.ArtifactStagingDirectory)/nuget'
+      projects: '$(Build.ArtifactStagingDirectory)/*.csproj'
+      nobuild: true
       includesymbols: false
       includesource: false
       verbosityPack: 'Diagnostic'
       failOnStandardError: 'true'
-    timeoutInMinutes: 10
+    condition: succeeded()
   - task: PublishBuildArtifacts@1
     displayName: Publish Artifacts
     inputs:
-      ArtifactName: 'catalystffi-nugets'
+      PathtoPublish: '$(Build.ArtifactStagingDirectory)/nuget'
+      ArtifactName: nuget-artifact
