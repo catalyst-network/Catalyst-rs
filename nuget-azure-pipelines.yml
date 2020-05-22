@@ -54,6 +54,11 @@ steps:
       SourceFolder: '.'
       Contents: '?(*.csproj|LICENSE)'
       TargetFolder: '$(Build.ArtifactStagingDirectory)'
+  - task: PublishBuildArtifacts@1
+    displayName: Publish Artifacts
+    inputs:
+      PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+      ArtifactName: nuget-artifact
   - task: NuGetCommand@2
     inputs:
       command: restore
