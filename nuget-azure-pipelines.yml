@@ -55,6 +55,12 @@ steps:
       Contents: '?(*.csproj|LICENSE)'
       TargetFolder: '$(Build.ArtifactStagingDirectory)'
   - task: DotNetCoreCLI@2
+    displayName: dotnet restore
+    inputs:
+      command: restore
+      projects: '$(Build.ArtifactStagingDirectory)/*.csproj'
+    includeNuGetOrg: true
+  - task: DotNetCoreCLI@2
     displayName: Pack
     inputs:
       command: pack
