@@ -54,6 +54,10 @@ steps:
       SourceFolder: '.'
       Contents: '?(*.csproj|LICENSE)'
       TargetFolder: '$(Build.ArtifactStagingDirectory)'
+  - task: NuGetCommand@2
+    inputs:
+      command: restore
+      restoreDirectory: $(Build.ArtifactStagingDirectory)'
   - task: DotNetCoreCLI@2
     displayName: dotnet restore
     inputs:
