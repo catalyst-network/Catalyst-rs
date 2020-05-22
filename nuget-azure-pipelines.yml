@@ -51,8 +51,8 @@ steps:
   - task: CopyFiles@2
     displayName: copy Licence and csproj for nuget packaging
     inputs:
-      SourceFolder: '.'
-      Contents: '$(Build.SourcesDirectory)/(*.csproj|LICENSE)'
+      SourceFolder: '$(Build.SourcesDirectory)'
+      Contents: '(*.csproj|LICENSE)'
       TargetFolder: '$(Build.ArtifactStagingDirectory)'
   - task: DotNetCoreCLI@2
     displayName: 'Build project'
