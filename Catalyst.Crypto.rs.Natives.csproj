@@ -2,8 +2,8 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <DisableImplicitFrameworkReferences>true</DisableImplicitFrameworkReferences>
-    <NoBuild>true</NoBuild>
-    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <NoBuild>false</NoBuild>
+    <IncludeBuildOutput>true</IncludeBuildOutput>
     <PackageOutputPath>$(MSBuildProjectDirectory)</PackageOutputPath>
     <ProjectFileToPack>$(MSBuildProjectFullPath)</ProjectFileToPack>
     <IsPackable>true</IsPackable>
