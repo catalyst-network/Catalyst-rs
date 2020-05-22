@@ -55,12 +55,6 @@ steps:
       Contents: '?(*.csproj|LICENSE)'
       TargetFolder: '$(Build.ArtifactStagingDirectory)'
   - task: DotNetCoreCLI@2
-    displayName: 'Build project'
-    inputs:
-      projects: '$(Build.ArtifactStagingDirectory)/*.csproj'
-      failOnStandardError: 'true'
-    timeoutInMinutes: 10
-  - task: DotNetCoreCLI@2
     displayName: Pack
     inputs:
       command: pack
