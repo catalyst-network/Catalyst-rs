@@ -32,20 +32,20 @@ steps:
     condition: eq( variables['Agent.OS'], 'Windows_NT' )
     inputs:
       SourceFolder: './packages/catalyst-ffi/target/debug'
-      TargetFolder: '$$(Build.ArtifactStagingDirectory)/runtimes/win-x64/native'
+      TargetFolder: '$(Build.ArtifactStagingDirectory)/runtimes/win-x64/native'
       Contents: 'catalyst_ffi.*'
   - task: CopyFiles@2
     displayName: copy macos runtime
     condition: eq( variables['Agent.OS'], 'Darwin' )
     inputs:
-      SourceFolder: '$./packages/catalyst-ffi/target/debug'
+      SourceFolder: './packages/catalyst-ffi/target/debug'
       TargetFolder: '$(Build.ArtifactStagingDirectory)/runtimes/osx-x64/native'
       Contents: 'libcatalyst_ffi.*'
   - task: CopyFiles@2
     displayName: copy linux runtime
     condition: eq( variables['Agent.OS'], 'Linux' )
     inputs:
-      SourceFolder: '$./packages/catalyst-ffi/target/debug'
+      SourceFolder: './packages/catalyst-ffi/target/debug'
       TargetFolder: '$(Build.ArtifactStagingDirectory)/runtimes/linux-x64/native'
       Contents: 'libcatalyst_ffi.*'
   - task: CopyFiles@2
