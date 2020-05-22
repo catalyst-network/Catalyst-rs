@@ -31,27 +31,27 @@ steps:
     displayName: copy windows runtime
     condition: eq( variables['Agent.OS'], 'Windows_NT' )
     inputs:
-      SourceFolder: '$(Build.SourcesDirectory)/packages/catalyst-ffi/target/debug'
-      TargetFolder: '$./runtimes/win-x64/native'
+      SourceFolder: './packages/catalyst-ffi/target/debug'
+      TargetFolder: '$$(Build.ArtifactStagingDirectory)/runtimes/win-x64/native'
       Contents: 'catalyst_ffi.*'
   - task: CopyFiles@2
     displayName: copy macos runtime
     condition: eq( variables['Agent.OS'], 'Darwin' )
     inputs:
-      SourceFolder: '$(Build.SourcesDirectory)/packages/catalyst-ffi/target/debug'
-      TargetFolder: '$./runtimes/osx-x64/native'
+      SourceFolder: '$./packages/catalyst-ffi/target/debug'
+      TargetFolder: '$(Build.ArtifactStagingDirectory)/runtimes/osx-x64/native'
       Contents: 'libcatalyst_ffi.*'
   - task: CopyFiles@2
     displayName: copy linux runtime
     condition: eq( variables['Agent.OS'], 'Linux' )
     inputs:
-      SourceFolder: '$(Build.SourcesDirectory)/packages/catalyst-ffi/target/debug'
-      TargetFolder: '$./runtimes/linux-x64/native'
+      SourceFolder: '$./packages/catalyst-ffi/target/debug'
+      TargetFolder: '$(Build.ArtifactStagingDirectory)/runtimes/linux-x64/native'
       Contents: 'libcatalyst_ffi.*'
   - task: CopyFiles@2
     displayName: copy Licence and csproj for nuget packaging
     inputs:
-      SourceFolder: '$(Build.SourcesDirectory)'
+      SourceFolder: '.'
       Contents: '(*.csproj|LICENSE)'
       TargetFolder: '$(Build.ArtifactStagingDirectory)'
   - task: DotNetCoreCLI@2
