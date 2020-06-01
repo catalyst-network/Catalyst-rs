@@ -89,3 +89,8 @@ steps:
     inputs:
       PathtoPublish: '$(Build.ArtifactStagingDirectory)/nuget'
       ArtifactName: nuget-artifact2
+  - task: NuGetCommand@2
+    displayName: 'NuGet publish'
+    inputs:
+      command: push
+      publishVstsFeed: 'e18f79e9-a966-41cf-9e66-8e9e96c7261c/998387ab-e6c6-4b21-900f-8970fb1411f1'
