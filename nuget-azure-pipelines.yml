@@ -49,10 +49,16 @@ steps:
       TargetFolder: '$(Build.ArtifactStagingDirectory)/runtimes/linux-x64/native'
       Contents: 'libcatalyst_ffi.*'
   - task: CopyFiles@2
-    displayName: copy Licence and csproj for nuget packaging
+    displayName: copy csproj for nuget packaging
     inputs:
       SourceFolder: '.'
-      Contents: '?(*.csproj|LICENSE)'
+      Contents: '*.csproj'
+      TargetFolder: '$(Build.ArtifactStagingDirectory)'
+  - task: CopyFiles@2
+    displayName: copy Licence for nuget packaging
+    inputs:
+      SourceFolder: './packages/catalyst-ffi'
+      Contents: 'LICENSE'
       TargetFolder: '$(Build.ArtifactStagingDirectory)'
   - task: PublishBuildArtifacts@1
     displayName: Publish Artifacts
