@@ -74,6 +74,12 @@ steps:
     inputs:
       command: restore
       restoreDirectory: $(Build.ArtifactStagingDirectory)'
+  - task: DotNetCoreCLI@2
+    displayName: 'Build project'
+    inputs:
+      projects: '$(Build.ArtifactStagingDirectory)/*.csproj'
+      failOnStandardError: 'true'
+      timeoutInMinutes: 10
   - task: NuGetCommand@2
     displayName: 'NuGet pack'
     inputs:
