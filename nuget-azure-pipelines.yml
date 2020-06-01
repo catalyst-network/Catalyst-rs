@@ -59,10 +59,6 @@ steps:
     inputs:
       PathtoPublish: '$(Build.ArtifactStagingDirectory)'
       ArtifactName: nuget-artifact
-  - task: NuGetCommand@2
-    inputs:
-      command: restore
-      restoreDirectory: $(Build.ArtifactStagingDirectory)'
   - task: DotNetCoreCLI@2
     displayName: dotnet restore
     inputs:
@@ -74,6 +70,10 @@ steps:
       projects: '$(Build.ArtifactStagingDirectory)/*.csproj'
       failOnStandardError: 'true'
       timeoutInMinutes: 10
+  - task: NuGetCommand@2
+    inputs:
+      command: restore
+      restoreDirectory: $(Build.ArtifactStagingDirectory)'
   - task: DotNetCoreCLI@2
     displayName: Pack
     inputs:
