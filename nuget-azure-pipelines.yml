@@ -83,7 +83,10 @@ steps:
   - task: NuGetCommand@2
     displayName: 'NuGet pack'
     inputs:
-      command: pack
+      command: 'pack'
+      packagesToPack: '$(Build.ArtifactStagingDirectory)/*.csproj'
+      packDestination: '$(Build.ArtifactStagingDirectory)/nuget'
+      versioningScheme: 'off'
   - task: PublishBuildArtifacts@1
     displayName: Publish Artifacts
     inputs:
