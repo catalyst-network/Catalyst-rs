@@ -74,20 +74,12 @@ steps:
     inputs:
       command: restore
       restoreDirectory: $(Build.ArtifactStagingDirectory)'
-  - task: DotNetCoreCLI@2
-    displayName: Pack
+  - task: NuGetCommand@2
+    displayName: 'NuGet pack'
     inputs:
       command: pack
-      packDirectory: '$(Build.ArtifactStagingDirectory)/nuget'
-      projects: '$(Build.ArtifactStagingDirectory)/*.csproj'
-      nobuild: true
-      includesymbols: false
-      includesource: false
-      verbosityPack: 'Diagnostic'
-      failOnStandardError: 'true'
-    condition: succeeded()
   - task: PublishBuildArtifacts@1
     displayName: Publish Artifacts
     inputs:
       PathtoPublish: '$(Build.ArtifactStagingDirectory)/nuget'
-      ArtifactName: nuget-artifact
+      ArtifactName: nuget-artifact2
