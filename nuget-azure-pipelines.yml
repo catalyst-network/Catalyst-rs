@@ -1,7 +1,7 @@
 stages:
   - stage: 'AssemblePackage'
     jobs:
-      - job: 'PushPackagesToNuget'
+      - job: 'BuildPackage'
         strategy:
           matrix:
             Windows-VS2019:
@@ -69,7 +69,7 @@ stages:
               PathtoPublish: '$(Build.ArtifactStagingDirectory)'
               ArtifactName: package-artifact
   - stage: 'PushToNuget'
-    dependsOn: 'Assemble-package'
+    dependsOn: 'AssemblePackage'
     condition: succeeded()
     jobs:
       - job: 'PushPackagesToNuget'
