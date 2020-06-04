@@ -11,7 +11,7 @@ license = "MIT"
 keywords = ["rust", "cryptography", "crypto", "catalyst", "dalek-cryptography"]
 
 [dependencies]
-ed25519-dalek = { version = "1.0.0-pre.3", features = ["nightly", "serde"] }
+ed25519-dalek = { version = "=1.0.0-pre.3", features = ["nightly", "serde"] }
 catalyst-protocol-sdk-rust = "=0.1.5"
 curve25519-dalek = "2.0.0"
 rand = { version = "0.7"}
