@@ -48,18 +48,21 @@ stages:
               Contents: 'libcatalyst_ffi.*'
           - task: CopyFiles@2
             displayName: copy csproj for nuget packaging
+            condition: eq( variables['Agent.OS'], 'Linux' )
             inputs:
               SourceFolder: '.'
               Contents: '*.csproj'
               TargetFolder: '$(Build.ArtifactStagingDirectory)'
           - task: CopyFiles@2
             displayName: copy Licence for nuget packaging
+            condition: eq( variables['Agent.OS'], 'Linux' )
             inputs:
               SourceFolder: './packages/catalyst-ffi'
               Contents: 'LICENSE'
               TargetFolder: '$(Build.ArtifactStagingDirectory)'
           - task: PublishBuildArtifacts@1
             displayName: Publish Artifacts
+            condition: eq( variables['Agent.OS'], 'Linux' )
             inputs:
               PathtoPublish: '$(Build.ArtifactStagingDirectory)'
               ArtifactName: package-artifact
@@ -89,7 +92,7 @@ stages:
             displayName: dotnet restore
             inputs:
               command: restore
-              projects: '$(Build.ArtifactStagingDirectory)/*.csproj'
+              projects: '$(Build.ArtifactStagingDirectory)/**/*.csproj'
           - task: NuGetCommand@2
             inputs:
               command: restore
