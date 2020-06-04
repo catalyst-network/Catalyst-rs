@@ -13,87 +13,108 @@ strategy:
       netcore_sdk: 3.1.201
       rustup_toolchain: nightly-2020-05-07
   maxParallel: 3
-
-pool:
-  vmImage: $(imageName)
-
-steps:
-  - task: DotNetCoreInstaller@0
-    displayName: 'Install .NetCore SDK'
-    inputs:
-      version: 3.1.201
-      failOnStandardError: 'true'
-  - script: cargo build --manifest-path packages/catalyst-ffi/Cargo.toml --verbose
-    displayName: Cargo build 
-  - script: cargo test --manifest-path packages/catalyst-ffi/Cargo.toml --verbose
-    displayName: Cargo test 
-  - task: CopyFiles@2
-    displayName: copy windows runtime
-    condition: eq( variables['Agent.OS'], 'Windows_NT' )
-    inputs:
-      SourceFolder: './packages/catalyst-ffi/target/debug'
-      TargetFolder: '$(Build.ArtifactStagingDirectory)/runtimes/win-x64/native'
-      Contents: 'catalyst_ffi.*'
-  - task: CopyFiles@2
-    displayName: copy macos runtime
-    condition: eq( variables['Agent.OS'], 'Darwin' )
-    inputs:
-      SourceFolder: './packages/catalyst-ffi/target/debug'
-      TargetFolder: '$(Build.ArtifactStagingDirectory)/runtimes/osx-x64/native'
-      Contents: 'libcatalyst_ffi.*'
-  - task: CopyFiles@2
-    displayName: copy linux runtime
-    condition: eq( variables['Agent.OS'], 'Linux' )
-    inputs:
-      SourceFolder: './packages/catalyst-ffi/target/debug'
-      TargetFolder: '$(Build.ArtifactStagingDirectory)/runtimes/linux-x64/native'
-      Contents: 'libcatalyst_ffi.*'
-  - task: CopyFiles@2
-    displayName: copy csproj for nuget packaging
-    inputs:
-      SourceFolder: '.'
-      Contents: '*.csproj'
-      TargetFolder: '$(Build.ArtifactStagingDirectory)'
-  - task: CopyFiles@2
-    displayName: copy Licence for nuget packaging
-    inputs:
-      SourceFolder: './packages/catalyst-ffi'
-      Contents: 'LICENSE'
-      TargetFolder: '$(Build.ArtifactStagingDirectory)'
-  - task: PublishBuildArtifacts@1
-    displayName: Publish Artifacts
-    inputs:
-      PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-      ArtifactName: nuget-artifact
-  - task: DotNetCoreCLI@2
-    displayName: dotnet restore
-    inputs:
-      command: restore
-      projects: '$(Build.ArtifactStagingDirectory)/*.csproj'
-  - task: NuGetCommand@2
-    inputs:
-      command: restore
-      restoreDirectory: $(Build.ArtifactStagingDirectory)'
-  - task: DotNetCoreCLI@2
-    displayName: 'Build project'
-    inputs:
-      projects: '$(Build.ArtifactStagingDirectory)/*.csproj'
-      failOnStandardError: 'true'
-      timeoutInMinutes: 10
-  - task: NuGetCommand@2
-    displayName: 'NuGet pack'
-    inputs:
-      command: 'pack'
-      packagesToPack: '$(Build.ArtifactStagingDirectory)/*.csproj'
-      packDestination: '$(Build.ArtifactStagingDirectory)/nuget'
-      versioningScheme: 'off'
-  - task: PublishBuildArtifacts@1
-    displayName: Publish Artifacts
-    inputs:
-      PathtoPublish: '$(Build.ArtifactStagingDirectory)/nuget'
-      ArtifactName: nuget-artifact2
-  - task: NuGetCommand@2
-    displayName: 'NuGet publish'
-    inputs:
-      command: push
-      publishVstsFeed: 'e18f79e9-a966-41cf-9e66-8e9e96c7261c/998387ab-e6c6-4b21-900f-8970fb1411f1'
+stages:
+  - stage: 'Assemble-package'
+    jobs:
+      - job: 'PushPackagesToNuget'
+        continueOnError: false
+        pool:
+          vmImage: $(imageName)
+        steps:
+          - task: DotNetCoreInstaller@0
+            displayName: 'Install .NetCore SDK'
+            inputs:
+              version: 3.1.201
+              failOnStandardError: 'true'
+          - script: cargo build --manifest-path packages/catalyst-ffi/Cargo.toml --verbose
+            displayName: Cargo build 
+          - script: cargo test --manifest-path packages/catalyst-ffi/Cargo.toml --verbose
+            displayName: Cargo test 
+          - task: CopyFiles@2
+            displayName: copy windows runtime
+            condition: eq( variables['Agent.OS'], 'Windows_NT' )
+            inputs:
+              SourceFolder: './packages/catalyst-ffi/target/debug'
+              TargetFolder: '$(Build.ArtifactStagingDirectory)/runtimes/win-x64/native'
+              Contents: 'catalyst_ffi.*'
+          - task: CopyFiles@2
+            displayName: copy macos runtime
+            condition: eq( variables['Agent.OS'], 'Darwin' )
+            inputs:
+              SourceFolder: './packages/catalyst-ffi/target/debug'
+              TargetFolder: '$(Build.ArtifactStagingDirectory)/runtimes/osx-x64/native'
+              Contents: 'libcatalyst_ffi.*'
+          - task: CopyFiles@2
+            displayName: copy linux runtime
+            condition: eq( variables['Agent.OS'], 'Linux' )
+            inputs:
+              SourceFolder: './packages/catalyst-ffi/target/debug'
+              TargetFolder: '$(Build.ArtifactStagingDirectory)/runtimes/linux-x64/native'
+              Contents: 'libcatalyst_ffi.*'
+          - task: CopyFiles@2
+            displayName: copy csproj for nuget packaging
+            inputs:
+              SourceFolder: '.'
+              Contents: '*.csproj'
+              TargetFolder: '$(Build.ArtifactStagingDirectory)'
+          - task: CopyFiles@2
+            displayName: copy Licence for nuget packaging
+            inputs:
+              SourceFolder: './packages/catalyst-ffi'
+              Contents: 'LICENSE'
+              TargetFolder: '$(Build.ArtifactStagingDirectory)'
+          - task: PublishBuildArtifacts@1
+            displayName: Publish Artifacts
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+              ArtifactName: package-artifact
+  - stage: 'PushToNuget'
+    dependsOn: 'Assemble-package'
+    condition: succeeded()
+    jobs:
+      - job: 'PushPackagesToNuget'
+        continueOnError: false
+        pool:
+          vmImage: 'ubuntu-18.04'
+        steps:
+          - checkout: none
+          - task: DownloadBuildArtifacts@0
+            inputs:
+              artifactName: 'package-artifact'
+              buildType: 'current'
+              downloadType: 'single'
+              itemPattern: '**'
+              downloadPath: '$(Build.ArtifactStagingDirectory)'
+          - task: DotNetCoreCLI@2
+            displayName: dotnet restore
+            inputs:
+              command: restore
+              projects: '$(Build.ArtifactStagingDirectory)/*.csproj'
+          - task: NuGetCommand@2
+            inputs:
+              command: restore
+              restoreDirectory: $(Build.ArtifactStagingDirectory)'
+          - task: DotNetCoreCLI@2
+            displayName: 'Build project'
+            inputs:
+              projects: '$(Build.ArtifactStagingDirectory)/*.csproj'
+              failOnStandardError: 'true'
+              timeoutInMinutes: 10
+          - task: NuGetCommand@2
+            displayName: 'NuGet pack'
+            inputs:
+              command: 'pack'
+              packagesToPack: '$(Build.ArtifactStagingDirectory)/*.csproj'
+              packDestination: '$(Build.ArtifactStagingDirectory)/nuget'
+              versioningScheme: 'off'
+          - task: PublishBuildArtifacts@1
+            displayName: Publish Artifacts
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)/nuget'
+              ArtifactName: nuget-artifact2
+          - task: NuGetCommand@2
+            displayName: 'NuGet publish'
+            inputs:
+              command: push
+              nuGetFeedType: external
+              publishFeedCredentials: 'atlas-turtle-tree'
