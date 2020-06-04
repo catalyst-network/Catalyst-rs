@@ -1,5 +1,5 @@
 stages:
-  - stage: 'Assemble-package'
+  - stage: 'AssemblePackage'
     jobs:
       - job: 'PushPackagesToNuget'
         strategy:
