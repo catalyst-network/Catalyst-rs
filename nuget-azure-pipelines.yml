@@ -100,14 +100,14 @@ stages:
           - task: DotNetCoreCLI@2
             displayName: 'Build project'
             inputs:
-              projects: '$(Build.ArtifactStagingDirectory)/*.csproj'
+              projects: '$(Build.ArtifactStagingDirectory)/**/*.csproj'
               failOnStandardError: 'true'
               timeoutInMinutes: 10
           - task: NuGetCommand@2
             displayName: 'NuGet pack'
             inputs:
               command: 'pack'
-              packagesToPack: '$(Build.ArtifactStagingDirectory)/*.csproj'
+              packagesToPack: '$(Build.ArtifactStagingDirectory)/**/*.csproj'
               packDestination: '$(Build.ArtifactStagingDirectory)/nuget'
               versioningScheme: 'off'
           - task: PublishBuildArtifacts@1
