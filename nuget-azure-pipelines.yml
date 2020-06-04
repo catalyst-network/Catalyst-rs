@@ -21,11 +21,6 @@ stages:
         pool:
           vmImage: $(imageName)
         steps:
-          - task: DotNetCoreInstaller@0
-            displayName: 'Install .NetCore SDK'
-            inputs:
-              version: 3.1.201
-              failOnStandardError: 'true'
           - script: cargo build --manifest-path packages/catalyst-ffi/Cargo.toml --verbose
             displayName: Cargo build 
           - script: cargo test --manifest-path packages/catalyst-ffi/Cargo.toml --verbose
@@ -85,6 +80,11 @@ stages:
               downloadType: 'single'
               itemPattern: '**'
               downloadPath: '$(Build.ArtifactStagingDirectory)'
+          - task: DotNetCoreInstaller@0
+            displayName: 'Install .NetCore SDK'
+            inputs:
+              version: 3.1.201
+              failOnStandardError: 'true'
           - task: DotNetCoreCLI@2
             displayName: dotnet restore
             inputs:
