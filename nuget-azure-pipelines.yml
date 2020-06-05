@@ -57,7 +57,7 @@ stages:
             displayName: copy Licence for nuget packaging
             condition: eq( variables['Agent.OS'], 'Linux' )
             inputs:
-              SourceFolder: './packages/catalyst-ffi'
+              SourceFolder: '.'
               Contents: 'LICENSE'
               TargetFolder: '$(Build.ArtifactStagingDirectory)'
           - task: PublishBuildArtifacts@1
@@ -91,7 +91,8 @@ stages:
             displayName: dotnet pack
             inputs:
               command: pack
-              projects: '$(Build.ArtifactStagingDirectory)/**/*.csproj'
+              packagesToPack: '$(Build.ArtifactStagingDirectory)/**/*.csproj'
+              packDirectory: '$(Build.ArtifactStagingDirectory)/nuget'
           - task: PublishBuildArtifacts@1
             displayName: Publish Artifacts
             inputs:
