@@ -88,27 +88,10 @@ stages:
               version: 3.1.201
               failOnStandardError: 'true'
           - task: DotNetCoreCLI@2
-            displayName: dotnet restore
+            displayName: dotnet pack
             inputs:
-              command: restore
+              command: pack
               projects: '$(Build.ArtifactStagingDirectory)/**/*.csproj'
-          - task: NuGetCommand@2
-            inputs:
-              command: restore
-              restoreDirectory: $(Build.ArtifactStagingDirectory)'
-          - task: DotNetCoreCLI@2
-            displayName: 'Build project'
-            inputs:
-              projects: '$(Build.ArtifactStagingDirectory)/**/*.csproj'
-              failOnStandardError: 'true'
-              timeoutInMinutes: 10
-          - task: NuGetCommand@2
-            displayName: 'NuGet pack'
-            inputs:
-              command: 'pack'
-              packagesToPack: '$(Build.ArtifactStagingDirectory)/**/*.csproj'
-              packDestination: '$(Build.ArtifactStagingDirectory)/nuget'
-              versioningScheme: 'off'
           - task: PublishBuildArtifacts@1
             displayName: Publish Artifacts
             inputs:
