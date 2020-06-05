@@ -26,7 +26,7 @@
     <OutputPath>bin\Release\</OutputPath>
   </PropertyGroup>
   <PropertyGroup>
-    <VersionPrefix>0.0.1</VersionPrefix>
+    <VersionPrefix>0.0.2</VersionPrefix>
   </PropertyGroup>
 
   <ItemGroup>
