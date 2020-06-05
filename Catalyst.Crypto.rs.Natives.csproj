@@ -26,9 +26,11 @@
     <OutputPath>bin\Release\</OutputPath>
   </PropertyGroup>
   <PropertyGroup>
+  <VersionSuffix>$(VersionSuffix)</VersionSuffix>
     <VersionPrefix>0.0.2</VersionPrefix>
-  </PropertyGroup>
-
+    <Version Condition=" '$(VersionSuffix)' != '' ">$(VersionPrefix).$(VersionSuffix)</Version>
+    <Version Condition=" '$(VersionSuffix)' == '' ">$(VersionPrefix)</Version>
+</PropertyGroup>
   <ItemGroup>
     <None Include="LICENSE" PackagePath="" Pack="true" />
     <None Include="runtimes\**\*.*" PackagePath="runtimes\" Pack="true" />
