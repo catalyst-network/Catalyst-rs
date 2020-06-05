@@ -62,7 +62,6 @@ stages:
               TargetFolder: '$(Build.ArtifactStagingDirectory)'
           - task: PublishBuildArtifacts@1
             displayName: Publish Artifacts
-            condition: eq( variables['Agent.OS'], 'Linux' )
             inputs:
               PathtoPublish: '$(Build.ArtifactStagingDirectory)'
               ArtifactName: package-artifact
@@ -114,7 +113,7 @@ stages:
             displayName: Publish Artifacts
             inputs:
               PathtoPublish: '$(Build.ArtifactStagingDirectory)/nuget'
-              ArtifactName: nuget-artifact2
+              ArtifactName: nuget-artifact
           - task: NuGetCommand@2
             displayName: 'NuGet publish'
             inputs:
