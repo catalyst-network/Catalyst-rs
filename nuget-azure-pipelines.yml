@@ -92,8 +92,8 @@ stages:
             inputs:
               command: pack
               packagesToPack: '$(Build.ArtifactStagingDirectory)/**/*.csproj'
-              arguments: '--version-suffix=$(Build.BuildId)'
               packDirectory: '$(Build.ArtifactStagingDirectory)/nuget'
+              buildProperties: 'VersionSuffix=$(Build.BuildId)'
           - task: PublishBuildArtifacts@1
             displayName: Publish Artifacts
             inputs:
