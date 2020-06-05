@@ -25,9 +25,8 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <OutputPath>bin\Release\</OutputPath>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Version)' == '' ">
-    <VersionPrefix Condition=" '$(VersionPrefix)' == '' ">0.0.1</VersionPrefix>
-    <Version Condition=" '$(Version)' == '' ">$(VersionPrefix)</Version>
+  <PropertyGroup>
+    <VersionPrefix>0.0.1</VersionPrefix>
   </PropertyGroup>
 
   <ItemGroup>
