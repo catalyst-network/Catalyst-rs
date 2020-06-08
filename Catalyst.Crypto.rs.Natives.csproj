@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <NoBuild>true</NoBuild>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <PackageOutputPath>$(MSBuildProjectDirectory)</PackageOutputPath>
+    <ProjectFileToPack>$(MSBuildProjectFullPath)</ProjectFileToPack>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PackageId>Catalyst.Crypto.rs.Natives</PackageId>
+    <Authors>AtlasCity.io</Authors>
+    <Description>Internal implementation package not meant for direct consumption. Please do not reference directly.</Description>
+    <Copyright>Copyright © 2019 AtlasCity.io</Copyright>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageLicenseUrl>https://github.com/catalyst-network/Catalyst-rs/packages/catalyst-ffi/LICENSE</PackageLicenseUrl>
+    <RepositoryUrl>https://github.com/catalyst-network/Catalyst-rs</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/catalyst-network/Catalyst-rs/packages/catalyst-ffi</PackageProjectUrl>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <OutputPath>bin\Debug\</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <OutputPath>bin\Release\</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup>
+  <VersionSuffix>$(VersionSuffix)</VersionSuffix>
+    <VersionPrefix>0.0.2</VersionPrefix>
+    <Version Condition=" '$(VersionSuffix)' != '' ">$(VersionPrefix).$(VersionSuffix)</Version>
+    <Version Condition=" '$(VersionSuffix)' == '' ">$(VersionPrefix)</Version>
+</PropertyGroup>
+  <ItemGroup>
+    <None Include="LICENSE" PackagePath="" Pack="true" />
+    <None Include="runtimes\**\*.*" PackagePath="runtimes\" Pack="true" />
+  </ItemGroup>
+
+</Project>

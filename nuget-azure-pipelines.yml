@@ -1,0 +1,107 @@
+stages:
+  - stage: 'AssemblePackage'
+    jobs:
+      - job: 'BuildPackage'
+        strategy:
+          matrix:
+            Windows-VS2019:
+              imageName: 'vs2017-win2016'
+              netcore_sdk: 3.1.201
+              rustup_toolchain: nightly-2020-05-07
+            Osx-Mojave:
+              imageName: 'macos-10.14'
+              netcore_sdk: 3.1.201
+              rustup_toolchain: nightly-2020-05-07
+            Ubuntu-1804:
+              imageName: 'ubuntu-18.04'
+              netcore_sdk: 3.1.201
+              rustup_toolchain: nightly-2020-05-07
+          maxParallel: 3
+        continueOnError: false
+        pool:
+          vmImage: $(imageName)
+        steps:
+          - script: cargo build --manifest-path packages/catalyst-ffi/Cargo.toml --verbose
+            displayName: Cargo build 
+          - script: cargo test --manifest-path packages/catalyst-ffi/Cargo.toml --verbose
+            displayName: Cargo test 
+          - task: CopyFiles@2
+            displayName: copy windows runtime
+            condition: eq( variables['Agent.OS'], 'Windows_NT' )
+            inputs:
+              SourceFolder: './packages/catalyst-ffi/target/debug'
+              TargetFolder: '$(Build.ArtifactStagingDirectory)/runtimes/win-x64/native'
+              Contents: 'catalyst_ffi.*'
+          - task: CopyFiles@2
+            displayName: copy macos runtime
+            condition: eq( variables['Agent.OS'], 'Darwin' )
+            inputs:
+              SourceFolder: './packages/catalyst-ffi/target/debug'
+              TargetFolder: '$(Build.ArtifactStagingDirectory)/runtimes/osx-x64/native'
+              Contents: 'libcatalyst_ffi.*'
+          - task: CopyFiles@2
+            displayName: copy linux runtime
+            condition: eq( variables['Agent.OS'], 'Linux' )
+            inputs:
+              SourceFolder: './packages/catalyst-ffi/target/debug'
+              TargetFolder: '$(Build.ArtifactStagingDirectory)/runtimes/linux-x64/native'
+              Contents: 'libcatalyst_ffi.*'
+          - task: CopyFiles@2
+            displayName: copy csproj for nuget packaging
+            condition: eq( variables['Agent.OS'], 'Linux' )
+            inputs:
+              SourceFolder: '.'
+              Contents: '*.csproj'
+              TargetFolder: '$(Build.ArtifactStagingDirectory)'
+          - task: CopyFiles@2
+            displayName: copy Licence for nuget packaging
+            condition: eq( variables['Agent.OS'], 'Linux' )
+            inputs:
+              SourceFolder: '.'
+              Contents: 'LICENSE'
+              TargetFolder: '$(Build.ArtifactStagingDirectory)'
+          - task: PublishBuildArtifacts@1
+            displayName: Publish Artifacts
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+              ArtifactName: package-artifact
+  - stage: 'PushToNuget'
+    dependsOn: 'AssemblePackage'
+    condition: succeeded()
+    jobs:
+      - job: 'PushPackagesToNuget'
+        continueOnError: false
+        pool:
+          vmImage: 'ubuntu-18.04'
+        steps:
+          - checkout: none
+          - task: DownloadBuildArtifacts@0
+            inputs:
+              artifactName: 'package-artifact'
+              buildType: 'current'
+              downloadType: 'single'
+              itemPattern: '**'
+              downloadPath: '$(Build.ArtifactStagingDirectory)'
+          - task: DotNetCoreInstaller@0
+            displayName: 'Install .NetCore SDK'
+            inputs:
+              version: 3.1.201
+              failOnStandardError: 'true'
+          - task: DotNetCoreCLI@2
+            displayName: dotnet pack
+            inputs:
+              command: pack
+              packagesToPack: '$(Build.ArtifactStagingDirectory)/**/*.csproj'
+              packDirectory: '$(Build.ArtifactStagingDirectory)/nuget'
+              buildProperties: 'VersionSuffix=$(Build.BuildId)'
+          - task: PublishBuildArtifacts@1
+            displayName: Publish Artifacts
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)/nuget'
+              ArtifactName: nuget-artifact
+          - task: NuGetCommand@2
+            displayName: 'NuGet publish'
+            inputs:
+              command: push
+              nuGetFeedType: external
+              publishFeedCredentials: 'atlas-turtle-tree'
